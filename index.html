@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#100d15">
+<title>UNFILTERED</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#100d15;color:#f5f2f7;font-family:Arial,sans-serif;min-height:100vh}
+header{text-align:center;padding:35px 15px 20px}
+.logo{font-size:35px;font-weight:900;letter-spacing:4px}
+.symbol{color:#a855f7;font-size:35px}
+.tagline{color:#b9a9c9;font-size:12px;letter-spacing:2px;margin-top:10px}
+main{max-width:520px;margin:auto;padding:18px}
+h1{font-size:27px}
+p{color:#bdb5c5;line-height:1.5}
+.card{background:#1d1923;border:1px solid #39313f;border-radius:16px;padding:22px;margin:15px 0}
+button{width:100%;padding:16px;border:1px solid #a855f7;border-radius:12px;background:#271d32;color:white;font-size:16px;font-weight:bold;margin:7px 0;cursor:pointer}
+button.primary{background:#7838ad}
+button:active{transform:scale(.98)}
+.small{font-size:12px;color:#aaa}
+.hidden{display:none}
+.category{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.category button{font-size:13px;padding:13px 5px}
+#question{font-size:23px;line-height:1.4;color:white;min-height:115px}
+#timer{font-size:30px;color:#c69bea;font-weight:bold;text-align:center}
+footer{text-align:center;color:#777080;padding:30px 10px;font-size:11px}
+</style>
+</head>
+<body>
+<header>
+<div class="symbol">✳</div>
+<div class="logo">UNFILTERED</div>
+<div class="tagline">YOUR SECRETS. YOUR RULES. YOUR GAME.</div>
+</header>
+
+<main>
+<section id="home">
+<div class="card">
+<h1>Welcome to UNFILTERED.</h1>
+<p>How well do you really know each other?</p>
+<p>Choose your game. Be honest. Expect the unexpected.</p>
+</div>
+<h2>Choose your mode</h2>
+<button class="primary" onclick="startGame('Friends')">🖤 FRIEND MODE</button>
+<button onclick="startGame('Lovers')">♥ LOVERS MODE</button>
+<p class="small">Two players. One game. No holding back.</p>
+</section>
+
+<section id="game" class="hidden">
+<button onclick="goHome()">← BACK</button>
+<h2 id="modeTitle">FRIEND MODE</h2>
+<p>Choose a category</p>
+<div class="category" id="categories"></div>
+<div class="card">
+<p class="small" id="categoryTitle">YOUR QUESTION</p>
+<div id="question">Choose a category to begin.</div>
+<div id="answer" class="hidden">
+<p>Take your time. Be honest. No judgement.</p>
+</div>
+<button class="primary" onclick="newQuestion()">NEXT QUESTION</button>
+<button onclick="reveal()">REVEAL / SHOW ANSWER</button>
+<div id="timer">60</div>
+<button onclick="startTimer()">START TIMER</button>
+<button onclick="stopTimer()">STOP TIMER</button>
+</div>
+</section>
+</main>
+
+<footer>UNFILTERED © 2026<br>CONNECT • CONFESS • CHALLENGE</footer>
+
+<script>
+const decks={
+"Getting To Know You":[
+"What is something people misunderstand about you?",
+"What is your favourite childhood memory?",
+"What is one thing on your bucket list?",
+"What makes you instantly like someone?",
+"What is something you wish people asked you?",
+"What is your biggest unexpected talent?"
+],
+"Friendship":[
+"What was your first impression of me?",
+"What is our funniest memory together?",
+"What would you trust me with?",
+"What is something we should do together?",
+"What do you appreciate most about me?",
+"Who is more likely to get us into trouble?"
+],
+"Deep & Honest":[
+"What is something you rarely tell people?",
+"When do you feel most understood?",
+"What is something you are still learning?",
+"What does happiness mean to you?",
+"What is one thing you wish you could change?",
+"What makes you feel truly safe?"
+],
+"Would You Rather":[
+"Would you rather read minds or see the future?",
+"Would you rather travel the world or live anywhere?",
+"Would you rather have unlimited money or unlimited time?",
+"Would you rather give up music or movies?",
+"Would you rather be famous or completely anonymous?",
+"Would you rather relive your best day or skip your worst?"
+],
+"Cheeky & Daring":[
+"What is the most mischievous thing you've done?",
+"What is your most embarrassing moment?",
+"What's a secret guilty pleasure?",
+"Have you ever had a crush you shouldn't have?",
+"What is the boldest thing you've ever done?",
+"What is something you'd never admit in public?"
+],
+"Love & Connection":[
+"What makes you feel appreciated?",
+"What does a perfect date look like?",
+"What is your biggest relationship green flag?",
+"What makes you feel close to someone?",
+"What is your favourite way to show affection?",
+"What does trust mean to you?"
+]
+};
+let currentMode="Friends",currentQuestion="",seconds=60,clock=null;
+function startGame(mode){
+currentMode=mode;
+document.getElementById("home").classList.add("hidden");
+document.getElementById("game").classList.remove("hidden");
+document.getElementById("modeTitle").textContent=mode.toUpperCase()+" MODE";
+document.getElementById("categories").innerHTML="";
+Object.keys(decks).forEach(category=>{
+let b=document.createElement("button");
+b.textContent=category;
+b.onclick=()=>pickQuestion(category);
+document.getElementById("categories").appendChild(b);
+});
+}
+function pickQuestion(category){
+let list=decks[category];
+currentQuestion=list[Math.floor(Math.random()*list.length)];
+document.getElementById("categoryTitle").textContent=category.toUpperCase();
+document.getElementById("question").textContent=currentQuestion;
+document.getElementById("answer").classList.add("hidden");
+}
+function newQuestion(){
+if(!currentQuestion){pickQuestion(Object.keys(decks)[0]);return;}
+let category=document.getElementById("categoryTitle").textContent;
+let list=decks[category]||Object.values(decks)[0];
+let choices=list.filter(q=>q!==currentQuestion);
+currentQuestion=choices[Math.floor(Math.random()*choices.length)]||list[0];
+document.getElementById("question").textContent=currentQuestion;
+document.getElementById("answer").classList.add("hidden");
+}
+function reveal(){
+document.getElementById("answer").classList.toggle("hidden");
+}
+function startTimer(){
+stopTimer();
+seconds=60;
+showTime();
+clock=setInterval(()=>{
+seconds--;
+showTime();
+if(seconds<=0)stopTimer();
+},1000);
+}
+function showTime(){
+document.getElementById("timer").textContent=seconds;
+}
+function stopTimer(){
+if(clock)clearInterval(clock);
+clock=null;
+}
+function goHome(){
+stopTimer();
+document.getElementById("game").classList.add("hidden");
+document.getElementById("home").classList.remove("hidden");
+}
+</script>
+</body>
+</html>
