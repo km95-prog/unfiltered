@@ -160,6 +160,99 @@ footer {
   font-size: 11px;
   letter-spacing: 1px;
 }
+/* UNFILTERED WELCOME SCREEN ENHANCEMENTS */
+
+#home {
+  position: relative;
+  padding-top: 22px;
+}
+
+#home .card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #8054a0;
+  background:
+    radial-gradient(ellipse at 100% 0%, #71339b30, transparent 45%),
+    linear-gradient(145deg, #24172f, #130f19);
+  box-shadow:
+    0 0 25px #963ce733,
+    inset 0 0 25px #a855f70d;
+}
+
+#home .card::before {
+  content: "✧";
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  color: #bd79f5;
+  font-size: 35px;
+  opacity: 0.55;
+  text-shadow: 0 0 15px #b66aff;
+}
+
+#home .card h1 {
+  color: #fffaff;
+  text-shadow: 0 0 15px #a855f744;
+}
+
+#home .card p {
+  position: relative;
+  z-index: 1;
+}
+
+#home h2 {
+  text-align: center;
+  letter-spacing: 1px;
+  margin: 30px 0 20px;
+  text-shadow: 0 0 12px #a855f755;
+}
+
+#home h2::after {
+  content: "✧ ───── ✳ ───── ✧";
+  display: block;
+  color: #b66aff;
+  font-size: 15px;
+  letter-spacing: 3px;
+  margin-top: 12px;
+  text-shadow: 0 0 12px #a855f7;
+}
+
+#home button {
+  min-height: 64px;
+  letter-spacing: 0.4px;
+  border-radius: 16px;
+}
+
+#home button.primary {
+  background: linear-gradient(110deg, #8739c2, #64268e, #8739c2);
+  border: 1px solid #d19aff;
+  box-shadow:
+    0 0 12px #a855f777,
+    inset 0 1px 8px #ffffff20;
+}
+
+#home button:not(.primary) {
+  background: linear-gradient(110deg, #21172c, #2b1b39);
+  border: 1px solid #a66acb;
+  box-shadow: 0 0 12px #8739c222;
+}
+
+#home button:active {
+  box-shadow: 0 0 25px #c17affaa;
+}
+
+#home > p.small {
+  text-align: center;
+  letter-spacing: 0.5px;
+  margin-top: 22px;
+  color: #c5a9dc;
+}
+
+header .symbol {
+  text-shadow:
+    0 0 10px #b66aff,
+    0 0 25px #933bea;
+}
 </style>
 </head>
 <body>
