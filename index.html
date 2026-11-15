@@ -385,6 +385,7 @@ header .symbol {
 <footer>UNFILTERED © 2026<br>CONNECT • CONFESS • CHALLENGE</footer>
 
 <script src="questions.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 let currentMode = "friends";
 let currentQuestion = "";
@@ -409,6 +410,135 @@ const categoryNames = {
 };
 
 let currentPlayStyle = "online";
+  
+const SUPABASE_URL = "https://jmsxcnckfnftrvzwbsba.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_7m5k-3hU5AwSlHLxtyQqIw_XAy2ftRL";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+let currentRoom = null;
+let currentPlayer = null;
+
+async function createGameRoom() {
+  const name = document.getElementById("playerName").value.trim();
+
+  if (!name) {
+    alert("Please enter your player name.");
+    return;
+  }
+
+  if (currentPlayStyle === "pass_play") {
+    startGame(currentMode);
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/create-room",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          game_mode: currentMode,
+          play_mode: currentPlayStyle,
+          display_name: name
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.room_code) {
+      throw new Error(result.error || "Could not create room.");
+    }
+
+    currentRoom = result;
+    currentPlayer = result;
+
+    document.getElementById("displayRoomCode").textContent =
+      result.room_code;
+
+    document.getElementById("playerList").textContent =
+      name + " (Host)";
+
+    document.getElementById("waitingMessage").textContent =
+      "Waiting for another player...";
+
+    showScreen("waitingScreen");
+
+  } catch (error) {
+    alert("Room creation failed: " + error.message);
+  }
+}
+
+async function joinGameRoom() {
+  const code = document.getElementById("roomCode").value.trim().toUpperCase();
+  const name = document.getElementById("joinPlayerName").value.trim();
+
+  if (!code || !name) {
+    alert("Please enter your room code and player name.");
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/join-room",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          room_code: code,
+          display_name: name
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.room_code) {
+      throw new Error(result.error || "Could not join room.");
+    }
+
+    currentRoom = result;
+    currentPlayer = result;
+
+    document.getElementById("displayRoomCode").textContent =
+      result.room_code;
+
+    document.getElementById("playerList").textContent =
+      name + " (Player 2)";
+
+    document.getElementById("waitingMessage").textContent =
+      "You've joined the room!";
+
+    showScreen("waitingScreen");
+
+  } catch (error) {
+    alert("Joining room failed: " + error.message);
+  }
+}
+
+function copyRoomCode() {
+  if (!currentRoom || !currentRoom.room_code) return;
+
+  navigator.clipboard.writeText(currentRoom.room_code)
+    .then(() => alert("Room code copied!"))
+    .catch(() => alert("Please copy the room code manually."));
+}
+
+function startMultiplayerGame() {
+  alert("Room setup is ready. Live player synchronisation is our next step!");
+}
+
 
 function showScreen(screenId) {
   const screens = [
