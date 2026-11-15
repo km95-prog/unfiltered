@@ -263,36 +263,123 @@ header .symbol {
 </header>
 
 <main>
-<section id="home">
-<div class="card">
-<h1>Welcome to UNFILTERED.</h1>
-<p>How well do you really know each other?</p>
-<p>Choose your game. Be honest. Expect the unexpected.</p>
-</div>
-<h2>Choose your mode</h2>
-<button class="primary" onclick="startGame('Friends')">🖤 FRIEND MODE</button>
-<button onclick="startGame('Lovers')">♥ LOVERS MODE</button>
-<p class="small">Two players. One game. No holding back.</p>
-</section>
 
-<section id="game" class="hidden">
-<button onclick="goHome()">← BACK</button>
-<h2 id="modeTitle">FRIEND MODE</h2>
-<p>Choose a category</p>
-<div class="category" id="categories"></div>
-<div class="card">
-<p class="small" id="categoryTitle">YOUR QUESTION</p>
-<div id="question">Choose a category to begin.</div>
-<div id="answer" class="hidden">
-<p>Take your time. Be honest. No judgement.</p>
-</div>
-<button class="primary" onclick="newQuestion()">NEXT QUESTION</button>
-<button onclick="reveal()">REVEAL / SHOW ANSWER</button>
-<div id="timer">60</div>
-<button onclick="startTimer()">START TIMER</button>
-<button onclick="stopTimer()">STOP TIMER</button>
-</div>
-</section>
+  <!-- WELCOME SCREEN -->
+  <section id="home">
+    <div class="card">
+      <h1>Welcome to UNFILTERED.</h1>
+      <p>How well do you really know each other?</p>
+      <p>Choose your game. Be honest. Expect the unexpected.</p>
+    </div>
+
+    <h2>Choose your mode</h2>
+
+    <button class="primary" onclick="showCreateScreen('friends')">
+      🖤 FRIEND MODE
+    </button>
+
+    <button onclick="showCreateScreen('lovers')">
+      ♥ LOVERS MODE
+    </button>
+
+    <p class="small">Two players. One game. No holding back.</p>
+  </section>
+
+  <!-- CREATE GAME SCREEN -->
+  <section id="createScreen" class="hidden">
+    <button onclick="goHome()">← BACK</button>
+    <h2>CREATE YOUR GAME</h2>
+    <p>Who's playing tonight?</p>
+
+    <div class="card">
+      <p id="selectedMode">FRIEND MODE</p>
+
+      <h3>Choose your play style</h3>
+      <button class="primary" onclick="selectPlayStyle('online')" id="onlineButton">
+        ✦ ONLINE — Different devices
+      </button>
+      <button onclick="selectPlayStyle('pass_play')" id="passPlayButton">
+        ♡ PASS & PLAY — One device
+      </button>
+
+      <h3>Your player name</h3>
+      <input id="playerName" type="text" placeholder="Enter your name..." maxlength="20">
+
+      <button class="primary" onclick="createGameRoom()">
+        CREATE ROOM
+      </button>
+
+      <button onclick="showJoinScreen()">JOIN AN EXISTING GAME</button>
+    </div>
+  </section>
+
+  <!-- JOIN GAME SCREEN -->
+  <section id="joinScreen" class="hidden">
+    <button onclick="showCreateScreen(currentMode)">← BACK</button>
+    <h2>JOIN A GAME</h2>
+    <p>Got a room code?</p>
+
+    <div class="card">
+      <input id="roomCode" type="text" placeholder="Enter room code..." maxlength="6">
+      <input id="joinPlayerName" type="text" placeholder="Enter your name..." maxlength="20">
+
+      <button class="primary" onclick="joinGameRoom()">JOIN ROOM</button>
+    </div>
+  </section>
+
+  <!-- WAITING ROOM -->
+  <section id="waitingScreen" class="hidden">
+    <button onclick="goHome()">← BACK</button>
+    <h2>WAITING ROOM</h2>
+
+    <div class="card">
+      <p>GAME CODE</p>
+      <h1 id="displayRoomCode">------</h1>
+      <button onclick="copyRoomCode()">COPY CODE</button>
+
+      <h3>PLAYERS</h3>
+      <div id="playerList">
+        Waiting for players...
+      </div>
+
+      <p id="waitingMessage">Waiting for another player...</p>
+
+      <button class="primary" onclick="startMultiplayerGame()">
+        START GAME
+      </button>
+    </div>
+  </section>
+
+  <!-- CATEGORY AND QUESTION GAME -->
+  <section id="game" class="hidden">
+    <button onclick="goHome()">← BACK</button>
+
+    <h2 id="modeTitle">FRIEND MODE</h2>
+    <p>Choose a category</p>
+
+    <div class="category" id="categories"></div>
+
+    <div class="card">
+      <p class="small" id="categoryTitle">YOUR QUESTION</p>
+
+      <div id="question">
+        Choose a category to begin.
+      </div>
+
+      <div id="answer" class="hidden">
+        <p>Take your time. Be honest. No judgement.</p>
+      </div>
+
+      <button class="primary" onclick="newQuestion()">NEXT QUESTION</button>
+      <button onclick="reveal()">REVEAL ANSWER</button>
+
+      <div id="timer">60</div>
+
+      <button onclick="startTimer()">START TIMER</button>
+      <button onclick="stopTimer()">STOP TIMER</button>
+    </div>
+  </section>
+
 </main>
 
 <footer>UNFILTERED © 2026<br>CONNECT • CONFESS • CHALLENGE</footer>
@@ -321,6 +408,49 @@ const categoryNames = {
   daringDesires: "Daring Desires"
 };
 
+let currentPlayStyle = "online";
+
+function showScreen(screenId) {
+  const screens = [
+    "home",
+    "createScreen",
+    "joinScreen",
+    "waitingScreen",
+    "game"
+  ];
+
+  screens.forEach(id => {
+    document.getElementById(id).classList.add("hidden");
+  });
+
+  document.getElementById(screenId).classList.remove("hidden");
+}
+
+function showCreateScreen(mode) {
+  currentMode = mode.toLowerCase();
+
+  document.getElementById("selectedMode").textContent =
+    currentMode.toUpperCase() + " MODE";
+
+  showScreen("createScreen");
+}
+
+function selectPlayStyle(style) {
+  currentPlayStyle = style;
+
+  document.getElementById("onlineButton").classList.toggle(
+    "primary", style === "online"
+  );
+
+  document.getElementById("passPlayButton").classList.toggle(
+    "primary", style === "pass_play"
+  );
+}
+
+function showJoinScreen() {
+  showScreen("joinScreen");
+}
+
 function startGame(mode) {
   currentMode = mode.toLowerCase();
 
@@ -331,8 +461,7 @@ function startGame(mode) {
     return;
   }
 
-  document.getElementById("home").classList.add("hidden");
-  document.getElementById("game").classList.remove("hidden");
+  showScreen("game");
   document.getElementById("modeTitle").textContent =
     mode.toUpperCase() + " MODE";
 
