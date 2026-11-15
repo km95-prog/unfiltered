@@ -365,7 +365,7 @@ window.UNFILTERED_QUESTIONS = {
       "Would you rather know what people genuinely think of you or never care what anyone thinks again?",
       "Would you rather be able to restart one day of your life or skip one difficult day in your future?",
       "Would you rather have everyone remember your funniest moment or your kindest moment?",
-      "Would you rather know the truth even when it hurts or live happily never knowing?"
+      "Would you rather know the truth even when it hurts or live happily never knowing?",
       "Would you rather have to reveal your most embarrassing childhood memory or your most embarrassing adult mistake?",
       "Would you rather have your best friend choose your next holiday destination or your next hobby?",
       "Would you rather always know when someone is disappointed in you or never know when someone is impressed by you?",
