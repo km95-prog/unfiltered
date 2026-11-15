@@ -7,26 +7,159 @@
 <meta name="theme-color" content="#100d15">
 <title>UNFILTERED</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#100d15;color:#f5f2f7;font-family:Arial,sans-serif;min-height:100vh}
-header{text-align:center;padding:35px 15px 20px}
-.logo{font-size:35px;font-weight:900;letter-spacing:4px}
-.symbol{color:#a855f7;font-size:35px}
-.tagline{color:#b9a9c9;font-size:12px;letter-spacing:2px;margin-top:10px}
-main{max-width:520px;margin:auto;padding:18px}
-h1{font-size:27px}
-p{color:#bdb5c5;line-height:1.5}
-.card{background:#1d1923;border:1px solid #39313f;border-radius:16px;padding:22px;margin:15px 0}
-button{width:100%;padding:16px;border:1px solid #a855f7;border-radius:12px;background:#271d32;color:white;font-size:16px;font-weight:bold;margin:7px 0;cursor:pointer}
-button.primary{background:#7838ad}
-button:active{transform:scale(.98)}
-.small{font-size:12px;color:#aaa}
-.hidden{display:none}
-.category{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.category button{font-size:13px;padding:13px 5px}
-#question{font-size:23px;line-height:1.4;color:white;min-height:115px}
-#timer{font-size:30px;color:#c69bea;font-weight:bold;text-align:center}
-footer{text-align:center;color:#777080;padding:30px 10px;font-size:11px}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, #29133f 0%, transparent 48%),
+    radial-gradient(ellipse at 50% 100%, #180d29 0%, transparent 45%),
+    #0d0a12;
+  color: #f5f0fa;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  padding: 35px 15px 25px;
+}
+
+.logo {
+  font-size: 35px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  margin-top: 8px;
+  text-shadow: 0 0 18px #a855f7;
+}
+
+.symbol {
+  color: #b66aff;
+  font-size: 35px;
+  text-shadow: 0 0 18px #a855f7;
+}
+
+.tagline {
+  color: #c8b4d8;
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin-top: 10px;
+}
+
+main {
+  max-width: 520px;
+  margin: auto;
+  padding: 18px;
+}
+
+h1 {
+  font-size: 27px;
+  line-height: 1.3;
+}
+
+h2 {
+  font-size: 23px;
+  margin-top: 25px;
+}
+
+p {
+  color: #c8bfd0;
+  line-height: 1.6;
+}
+
+.card {
+  background: linear-gradient(145deg, #21182b, #15101d);
+  border: 1px solid #59406c;
+  border-radius: 20px;
+  padding: 22px;
+  margin: 15px 0;
+  box-shadow: 0 0 20px #a855f71a;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #a855f7;
+  border-radius: 14px;
+  background: #21172d;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 8px 0;
+  transition: 0.2s ease;
+}
+
+button.primary {
+  background: linear-gradient(135deg, #8138bd, #542078);
+  border: 1px solid #c17aff;
+  box-shadow: 0 0 16px #a855f755;
+}
+
+button:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 22px #b66aff99;
+}
+
+.small {
+  font-size: 12px;
+  color: #aaa0b5;
+}
+
+.hidden {
+  display: none;
+}
+
+.category {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.category button {
+  font-size: 13px;
+  padding: 13px 5px;
+  background: #191321;
+  border-color: #70448d;
+}
+
+#question {
+  font-size: 23px;
+  line-height: 1.5;
+  color: white;
+  min-height: 115px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 12px #a855f755;
+}
+
+#timer {
+  font-size: 30px;
+  color: #c77aff;
+  font-weight: bold;
+  text-align: center;
+  text-shadow: 0 0 15px #a855f7;
+}
+
+#answer {
+  border: 1px solid #a855f7;
+  border-radius: 16px;
+  padding: 18px;
+  background: #21152d;
+  box-shadow: 0 0 20px #a855f733;
+}
+
+footer {
+  text-align: center;
+  color: #9777ad;
+  padding: 30px 10px;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
 </style>
 </head>
 <body>
