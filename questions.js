@@ -103,7 +103,8 @@ window.UNFILTERED_QUESTIONS = {
       "Have you ever had to choose between two friends?",
       "What would make you feel genuinely appreciated as a friend?",
       "If our friendship had a warning label, what would it say?",
-      "Do you think we'll still be in each ot
+      "Do you think we'll still be in each other's lives ten years from now?"
+],
     funny: [
       "What's the most embarrassing thing you've done in public?",
       "If you were arrested tomorrow, what would your friends assume you did?",
