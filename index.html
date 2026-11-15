@@ -71,111 +71,163 @@ footer{text-align:center;color:#777080;padding:30px 10px;font-size:11px}
 
 <footer>UNFILTERED © 2026<br>CONNECT • CONFESS • CHALLENGE</footer>
 
+<script src="questions.js"></script>
 <script>
-const decks={
-"Getting To Know You":[
-"What is something people misunderstand about you?",
-"What is your favourite childhood memory?",
-"What is one thing on your bucket list?",
-"What makes you instantly like someone?",
-"What is something you wish people asked you?",
-"What is your biggest unexpected talent?"
-],
-"Friendship":[
-"What was your first impression of me?",
-"What is our funniest memory together?",
-"What would you trust me with?",
-"What is something we should do together?",
-"What do you appreciate most about me?",
-"Who is more likely to get us into trouble?"
-],
-"Deep & Honest":[
-"What is something you rarely tell people?",
-"When do you feel most understood?",
-"What is something you are still learning?",
-"What does happiness mean to you?",
-"What is one thing you wish you could change?",
-"What makes you feel truly safe?"
-],
-"Would You Rather":[
-"Would you rather read minds or see the future?",
-"Would you rather travel the world or live anywhere?",
-"Would you rather have unlimited money or unlimited time?",
-"Would you rather give up music or movies?",
-"Would you rather be famous or completely anonymous?",
-"Would you rather relive your best day or skip your worst?"
-],
-"Cheeky & Daring":[
-"What is the most mischievous thing you've done?",
-"What is your most embarrassing moment?",
-"What's a secret guilty pleasure?",
-"Have you ever had a crush you shouldn't have?",
-"What is the boldest thing you've ever done?",
-"What is something you'd never admit in public?"
-],
-"Love & Connection":[
-"What makes you feel appreciated?",
-"What does a perfect date look like?",
-"What is your biggest relationship green flag?",
-"What makes you feel close to someone?",
-"What is your favourite way to show affection?",
-"What does trust mean to you?"
-]
+let currentMode = "friends";
+let currentQuestion = "";
+let currentCategory = "";
+let currentLevel = "";
+let seconds = 60;
+let clock = null;
+
+const categoryNames = {
+  gettingToKnowYou: "Getting to Know You",
+  friendship: "Friendship",
+  funny: "Funny",
+  deep: "Deep & Honest",
+  dare: "Dare",
+  dareMe: "Dare Me",
+  wouldYouRather: "Would You Rather",
+  relationshipAndCompatibility: "Relationship & Compatibility",
+  deepAndEmotional: "Deep & Emotional",
+  passionAndIntimacy: "Passion & Intimacy",
+  secretsAndConfessions: "Secrets & Confessions",
+  daringDesires: "Daring Desires"
 };
-let currentMode="Friends",currentQuestion="",seconds=60,clock=null;
-function startGame(mode){
-currentMode=mode;
-document.getElementById("home").classList.add("hidden");
-document.getElementById("game").classList.remove("hidden");
-document.getElementById("modeTitle").textContent=mode.toUpperCase()+" MODE";
-document.getElementById("categories").innerHTML="";
-Object.keys(decks).forEach(category=>{
-let b=document.createElement("button");
-b.textContent=category;
-b.onclick=()=>pickQuestion(category);
-document.getElementById("categories").appendChild(b);
-});
+
+function startGame(mode) {
+  currentMode = mode.toLowerCase();
+
+  const library = window.UNFILTERED_QUESTIONS;
+
+  if (!library || !library[currentMode]) {
+    alert("Question library could not be loaded. Please refresh the page.");
+    return;
+  }
+
+  document.getElementById("home").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  document.getElementById("modeTitle").textContent =
+    mode.toUpperCase() + " MODE";
+
+  document.getElementById("question").textContent =
+    "Choose a category to begin.";
+  document.getElementById("categoryTitle").textContent = "YOUR QUESTION";
+  document.getElementById("answer").classList.add("hidden");
+
+  const categories = document.getElementById("categories");
+  categories.innerHTML = "";
+
+  Object.keys(library[currentMode]).forEach(category => {
+    const button = document.createElement("button");
+    button.textContent = categoryNames[category] || category;
+    button.onclick = () => pickQuestion(category);
+    categories.appendChild(button);
+  });
+
+  currentQuestion = "";
+  currentCategory = "";
+  currentLevel = "";
 }
-function pickQuestion(category){
-let list=decks[category];
-currentQuestion=list[Math.floor(Math.random()*list.length)];
-document.getElementById("categoryTitle").textContent=category.toUpperCase();
-document.getElementById("question").textContent=currentQuestion;
-document.getElementById("answer").classList.add("hidden");
+
+function pickQuestion(category, level = "") {
+  const library = window.UNFILTERED_QUESTIONS[currentMode];
+  let list = library[category];
+
+  currentCategory = category;
+  currentLevel = level;
+
+  if (category === "dareMe" && !level) {
+    showDareLevels();
+    return;
+  }
+
+  if (category === "dareMe" && level) {
+    list = list[level];
+  }
+
+  if (!Array.isArray(list) || list.length === 0) {
+    alert("This category could not be loaded.");
+    return;
+  }
+
+  let choices = list.filter(question => question !== currentQuestion);
+
+  if (choices.length === 0) choices = list;
+
+  currentQuestion = choices[Math.floor(Math.random() * choices.length)];
+
+  document.getElementById("categoryTitle").textContent =
+    (categoryNames[category] || category) +
+    (level ? " — " + level.toUpperCase() : "");
+
+  document.getElementById("question").textContent = currentQuestion;
+  document.getElementById("answer").classList.add("hidden");
 }
-function newQuestion(){
-if(!currentQuestion){pickQuestion(Object.keys(decks)[0]);return;}
-let category=document.getElementById("categoryTitle").textContent;
-let list=decks[category]||Object.values(decks)[0];
-let choices=list.filter(q=>q!==currentQuestion);
-currentQuestion=choices[Math.floor(Math.random()*choices.length)]||list[0];
-document.getElementById("question").textContent=currentQuestion;
-document.getElementById("answer").classList.add("hidden");
+
+function showDareLevels() {
+  const categories = document.getElementById("categories");
+  categories.innerHTML = "";
+
+  document.getElementById("categoryTitle").textContent = "CHOOSE YOUR DARE LEVEL";
+  document.getElementById("question").textContent =
+    "How daring are you feeling?";
+
+  document.getElementById("answer").classList.add("hidden");
+
+  ["mild", "wild", "unfiltered"].forEach(level => {
+    const button = document.createElement("button");
+    button.textContent = level.toUpperCase();
+    button.onclick = () => pickQuestion("dareMe", level);
+    categories.appendChild(button);
+  });
+
+  const backButton = document.createElement("button");
+  backButton.textContent = "BACK TO CATEGORIES";
+  backButton.onclick = () => startGame(
+    currentMode === "friends" ? "Friends" : "Lovers"
+  );
+  categories.appendChild(backButton);
 }
-function reveal(){
-document.getElementById("answer").classList.toggle("hidden");
+
+function newQuestion() {
+  if (!currentCategory) return;
+
+  pickQuestion(currentCategory, currentLevel);
 }
-function startTimer(){
-stopTimer();
-seconds=60;
-showTime();
-clock=setInterval(()=>{
-seconds--;
-showTime();
-if(seconds<=0)stopTimer();
-},1000);
+
+function reveal() {
+  document.getElementById("answer").classList.toggle("hidden");
 }
-function showTime(){
-document.getElementById("timer").textContent=seconds;
+
+function startTimer() {
+  stopTimer();
+  seconds = 60;
+  showTime();
+
+  clock = setInterval(() => {
+    seconds--;
+    showTime();
+
+    if (seconds <= 0) {
+      stopTimer();
+    }
+  }, 1000);
 }
-function stopTimer(){
-if(clock)clearInterval(clock);
-clock=null;
+
+function showTime() {
+  document.getElementById("timer").textContent = seconds;
 }
-function goHome(){
-stopTimer();
-document.getElementById("game").classList.add("hidden");
-document.getElementById("home").classList.remove("hidden");
+
+function stopTimer() {
+  if (clock) clearInterval(clock);
+  clock = null;
+}
+
+function goHome() {
+  stopTimer();
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("home").classList.remove("hidden");
 }
 </script>
 </body>
