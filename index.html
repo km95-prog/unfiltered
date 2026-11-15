@@ -535,10 +535,61 @@ function copyRoomCode() {
     .catch(() => alert("Please copy the room code manually."));
 }
 
-function startMultiplayerGame() {
-  alert("Room setup is ready. Live player synchronisation is our next step!");
-}
+async function startMultiplayerGame() {
+  if (!currentRoom || !currentPlayer) {
+    alert("Room information is missing. Please return to the waiting room.");
+    return;
+  }
 
+  const button = document.querySelector(
+    '#waitingScreen button[onclick="startMultiplayerGame()"]'
+  );
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "WAITING FOR PLAYER...";
+  }
+
+  try {
+    while (true) {
+      const response = await fetch(
+        SUPABASE_URL + "/functions/v1/room-status",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({
+            room_code: currentRoom.room_code,
+            player_token: currentPlayer.player_token
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Could not check room.");
+      }
+
+      if (result.players && result.players.length === 2) {
+        if (button) button.textContent = "STARTING GAME...";
+        startGame(currentMode === "friends" ? "Friends" : "Lovers");
+        return;
+      }
+
+      if (button) button.textContent = "WAITING FOR PLAYER...";
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+  } catch (error) {
+    alert("Could not start game: " + error.message);
+    if (button) {
+      button.disabled = false;
+      button.textContent = "START GAME";
+    }
+  }
+}
 
 function showScreen(screenId) {
   const screens = [
