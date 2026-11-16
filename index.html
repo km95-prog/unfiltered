@@ -428,8 +428,9 @@ function saveRoomSession() {
     room: currentRoom,
     player: currentPlayer,
     mode: currentMode,
-    playStyle: currentPlayStyle
-  }));
+    playStyle: currentPlayStyle,
+ displayName: document.getElementById("playerName").value.trim() ||
+  document.getElementById("joinPlayerName").value.trim() }));
 }
   
 function restoreRoomSession() {
