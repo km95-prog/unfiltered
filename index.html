@@ -421,6 +421,46 @@ const supabaseClient = window.supabase.createClient(
 
 let currentRoom = null;
 let currentPlayer = null;
+function saveRoomSession() {
+  if (!currentRoom || !currentPlayer) return;
+
+  localStorage.setItem("unfilteredRoomSession", JSON.stringify({
+    room: currentRoom,
+    player: currentPlayer,
+    mode: currentMode,
+    playStyle: currentPlayStyle
+  }));
+}
+  
+function restoreRoomSession() {
+  const saved = localStorage.getItem("unfilteredRoomSession");
+
+  if (!saved) return;
+
+  try {
+    const session = JSON.parse(saved);
+
+    if (!session.room || !session.player) return;
+
+    currentRoom = session.room;
+    currentPlayer = session.player;
+    currentMode = session.mode || "friends";
+    currentPlayStyle = session.playStyle || "online";
+
+    document.getElementById("displayRoomCode").textContent =
+      currentRoom.room_code;
+
+    document.getElementById("playerList").textContent =
+      currentPlayer.display_name || "Player";
+
+    document.getElementById("waitingMessage").textContent =
+      "Room restored!";
+
+    showScreen("waitingScreen");
+  } catch (error) {
+    console.error("Could not restore room:", error);
+  }
+}
 
 async function createGameRoom() {
   const name = document.getElementById("playerName").value.trim();
@@ -460,7 +500,9 @@ async function createGameRoom() {
 
     currentRoom = result;
     currentPlayer = result;
-
+    
+    saveRoomSession();
+    
     document.getElementById("displayRoomCode").textContent =
       result.room_code;
 
@@ -510,6 +552,8 @@ async function joinGameRoom() {
 
     currentRoom = result;
     currentPlayer = result;
+
+    saveRoomSession();
 
     document.getElementById("displayRoomCode").textContent =
       result.room_code;
@@ -765,6 +809,7 @@ function goHome() {
   document.getElementById("game").classList.add("hidden");
   document.getElementById("home").classList.remove("hidden");
 }
+  restoreRoomSession();
 </script>
 </body>
 </html>
