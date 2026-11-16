@@ -433,6 +433,37 @@ const supabaseClient = window.supabase.createClient(
 
 let currentRoom = null;
 let currentPlayer = null;
+let currentRoundId = null;
+let gamePoller = null;
+let hasSubmittedAnswer = false;
+let currentRoundNumber = 0;
+  async function publishSharedQuestion(roundNumber, category, questionText) {
+  const response = await fetch(
+    SUPABASE_URL + "/functions/v1/set-room-question",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({
+        room_code: currentRoom.room_code,
+        player_token: currentPlayer.player_token,
+        round_number: roundNumber,
+        category: category,
+        question_text: questionText
+      })
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || "Could not share question.");
+  }
+
+  return result.round;
+  }
 function saveRoomSession() {
   if (!currentRoom || !currentPlayer) return;
 
