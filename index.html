@@ -365,7 +365,19 @@ header .symbol {
       <div id="question">
         Choose a category to begin.
       </div>
+<div class="card" id="answerEntry">
+  <p class="small">YOUR ANSWER</p>
+  <textarea id="playerAnswer" placeholder="Type your answer privately..." rows="3"></textarea>
+  <button class="primary" onclick="submitPrivateAnswer()">SUBMIT ANSWER</button>
+  <p id="answerStatus">Your answer will stay private until both players have submitted.</p>
+</div>
 
+<div id="answerReveal" class="hidden">
+  <h3>THE ANSWERS ARE IN ✳</h3>
+  <p id="playerOneAnswer"></p>
+  <p id="playerTwoAnswer"></p>
+</div>
+      
       <div id="answer" class="hidden">
         <p>Take your time. Be honest. No judgement.</p>
       </div>
