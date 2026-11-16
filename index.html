@@ -617,7 +617,12 @@ async function startMultiplayerGame() {
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Could not check room.");
       }
-
+document.getElementById("playerList").textContent =
+  result.players.map(player =>
+    player.display_name +
+    (player.player_number === 1 ? " (Host)" : " (Player 2)")
+  ).join(" • ");
+      
       if (result.players && result.players.length === 2) {
         if (button) button.textContent = "STARTING GAME...";
         startGame(currentMode === "friends" ? "Friends" : "Lovers");
