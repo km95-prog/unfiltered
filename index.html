@@ -452,7 +452,7 @@ function restoreRoomSession() {
       currentRoom.room_code;
 
     document.getElementById("playerList").textContent =
-      currentPlayer.display_name || "Player";
+      session.displayName || currentPlayer.display_name || "Player";
 
     document.getElementById("waitingMessage").textContent =
       "Room restored!";
