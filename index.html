@@ -846,7 +846,61 @@ function newQuestion() {
   pickQuestion(currentCategory, currentLevel);
 }
 
-function reveal() {
+async function submitPrivateAnswer() {
+  if (!currentRoom || !currentPlayer || !currentRoundId) {
+    alert("The question round is not ready yet.");
+    return;
+  }
+
+  const answer = document.getElementById("playerAnswer").value.trim();
+
+  if (!answer) {
+    alert("Please enter your answer first.");
+    return;
+  }
+
+  const button = document.querySelector("#answerEntry button");
+  const status = document.getElementById("answerStatus");
+
+  button.disabled = true;
+  button.textContent = "SUBMITTING...";
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/submit-answer",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          room_code: currentRoom.room_code,
+          player_token: currentPlayer.player_token,
+          round_id: currentRoundId,
+          answer: answer
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "Could not submit answer.");
+    }
+
+    hasSubmittedAnswer = true;
+    document.getElementById("playerAnswer").disabled = true;
+    status.textContent = "Answer submitted privately. Waiting for the other player...";
+    button.textContent = "ANSWER SUBMITTED";
+
+  } catch (error) {
+    alert("Submission failed: " + error.message);
+    button.disabled = false;
+    button.textContent = "SUBMIT ANSWER";
+  }
+
+  function reveal() {
   document.getElementById("answer").classList.toggle("hidden");
 }
 
