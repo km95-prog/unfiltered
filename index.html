@@ -759,7 +759,7 @@ function startGame(mode) {
   currentLevel = "";
 }
 
-function pickQuestion(category, level = "") {
+async function pickQuestion(category, level = "") {
   const library = window.UNFILTERED_QUESTIONS[currentMode];
   let list = library[category];
 
@@ -784,7 +784,28 @@ function pickQuestion(category, level = "") {
 
   if (choices.length === 0) choices = list;
 
-  currentQuestion = choices[Math.floor(Math.random() * choices.length)];
+  const selectedQuestion =
+    choices[Math.floor(Math.random() * choices.length)];
+
+  if (currentPlayStyle === "online" && currentRoom && currentPlayer) {
+    try {
+      const nextRound = currentRoundNumber + 1;
+
+      const round = await publishSharedQuestion(
+        nextRound,
+        category,
+        selectedQuestion
+      );
+
+      currentRoundId = round.id;
+      currentRoundNumber = nextRound;
+    } catch (error) {
+      alert("Could not share question: " + error.message);
+      return;
+    }
+  }
+
+  currentQuestion = selectedQuestion;
 
   document.getElementById("categoryTitle").textContent =
     (categoryNames[category] || category) +
