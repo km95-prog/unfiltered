@@ -831,6 +831,21 @@ try {
 
       currentRoundId = round.id;
       currentRoundNumber = nextRound;
+  
+  document.getElementById("playerAnswer").value = "";
+document.getElementById("playerAnswer").disabled = false;
+
+const submitButton = document.querySelector("#answerEntry button");
+submitButton.disabled = false;
+submitButton.textContent = "SUBMIT ANSWER";
+
+document.getElementById("answerStatus").textContent =
+  "Your answer will stay private until both players have submitted.";
+
+document.getElementById("answerEntry").classList.remove("hidden");
+document.getElementById("answerReveal").classList.add("hidden");
+
+hasSubmittedAnswer = false;
     } catch (error) {
       alert("Could not share question: " + error.message);
       return;
