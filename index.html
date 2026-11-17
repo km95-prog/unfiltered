@@ -736,6 +736,11 @@ function startGame(mode) {
   }
 
   showScreen("game");
+
+  if (currentPlayStyle === "online" && currentRoom && currentPlayer) {
+  startGamePolling();
+  }
+  
   document.getElementById("modeTitle").textContent =
     mode.toUpperCase() + " MODE";
 
