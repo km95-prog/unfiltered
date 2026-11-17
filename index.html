@@ -476,7 +476,7 @@ function saveRoomSession() {
   document.getElementById("joinPlayerName").value.trim() }));
 }
   
-function restoreRoomSession() {
+async function restoreRoomSession() {
   const saved = localStorage.getItem("unfilteredRoomSession");
 
   if (!saved) return;
@@ -494,9 +494,32 @@ function restoreRoomSession() {
     document.getElementById("displayRoomCode").textContent =
       currentRoom.room_code;
 
-    document.getElementById("playerList").textContent =
-      session.displayName || currentPlayer.display_name || "Player";
+    const response = await fetch(
+  SUPABASE_URL + "/functions/v1/room-status",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_ANON_KEY
+    },
+    body: JSON.stringify({
+      room_code: currentRoom.room_code,
+      player_token: currentPlayer.player_token
+    })
+  }
+);
 
+const result = await response.json();
+
+if (!response.ok || !result.success) {
+  throw new Error(result.error || "Could not restore players.");
+}
+
+document.getElementById("playerList").textContent =
+  result.players.map(player =>
+    player.display_name +
+    (player.player_number === 1 ? " (Host)" : " (Player 2)")
+  ).join(" • ");
     document.getElementById("waitingMessage").textContent =
       "Room restored!";
 
