@@ -434,7 +434,7 @@ const supabaseClient = window.supabase.createClient(
 let currentRoom = null;
 let currentPlayer = null;
 let currentRoundId = null;
-let gamePoller = null;
+let gamePoll = null;
 let hasSubmittedAnswer = false;
 let currentRoundNumber = 0;
   async function publishSharedQuestion(roundNumber, category, questionText) {
