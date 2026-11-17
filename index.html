@@ -977,12 +977,12 @@ async function submitPrivateAnswer() {
       hasSubmittedAnswer = false;
     }
 
-   if (round.answers_revealed && round.answers) {
-      const playerOne = round.answers.find(
+   if (result.answers_revealed && result.answers) {
+      const playerOne = result.answers.find(
         answer => answer.player_number === 1
       );
 
-      const playerTwo = round.answers.find(
+      const playerTwo = result.answers.find(
         answer => answer.player_number === 2
       );
 
