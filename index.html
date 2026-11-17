@@ -900,6 +900,85 @@ async function submitPrivateAnswer() {
     button.textContent = "SUBMIT ANSWER";
   }
 
+  async function checkGameState() {
+  if (!currentRoom || !currentPlayer) return;
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/room-status",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          room_code: currentRoom.room_code,
+          player_token: currentPlayer.player_token
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) return;
+
+    const round = result.current_round;
+
+    if (!round) return;
+
+    if (round.id !== currentRoundId) {
+      currentRoundId = round.id;
+      currentRoundNumber = round.round_number;
+      currentQuestion = round.question_text;
+      currentCategory = round.category;
+
+      document.getElementById("question").textContent =
+        round.question_text;
+
+      document.getElementById("categoryTitle").textContent =
+        round.category;
+
+      document.getElementById("playerAnswer").value = "";
+      document.getElementById("playerAnswer").disabled = false;
+
+      document.getElementById("answerEntry").classList.remove("hidden");
+      document.getElementById("answerReveal").classList.add("hidden");
+
+      hasSubmittedAnswer = false;
+    }
+
+   if (round.answers_revealed && round.answers) {
+      const playerOne = round.answers.find(
+        answer => answer.player_number === 1
+      );
+
+      const playerTwo = round.answers.find(
+        answer => answer.player_number === 2
+      );
+
+      document.getElementById("playerOneAnswer").textContent =
+        playerOne ? playerOne.answer : "";
+
+      document.getElementById("playerTwoAnswer").textContent =
+        playerTwo ? playerTwo.answer : "";
+
+      document.getElementById("answerReveal").classList.remove("hidden");
+      document.getElementById("answerStatus").textContent =
+        "Both answers are in!";
+    }
+
+  } catch (error) {
+    console.error("Game update failed:", error);
+  }
+}
+
+function startGamePolling() {
+  if (gamePoll) clearInterval(gamePoll);
+
+  gamePoll = setInterval(checkGameState, 3000);
+}
+  
   function reveal() {
   document.getElementById("answer").classList.toggle("hidden");
 }
