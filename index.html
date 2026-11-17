@@ -434,7 +434,8 @@ const supabaseClient = window.supabase.createClient(
 let currentRoom = null;
 let currentPlayer = null;
 let currentRoundId = null;
-let gamePoll = null;
+let gamePoll = null; 
+let isPublishingQuestion = false;
 let hasSubmittedAnswer = false;
 let currentRoundNumber = 0;
   async function publishSharedQuestion(roundNumber, category, questionText) {
@@ -816,7 +817,10 @@ async function pickQuestion(category, level = "") {
     choices[Math.floor(Math.random() * choices.length)];
 
   if (currentPlayStyle === "online" && currentRoom && currentPlayer) {
-    try {
+    if (isPublishingQuestion) return;
+    is PublishingQuestion = true;
+try {
+  
       const nextRound = currentRoundNumber + 1;
 
       const round = await publishSharedQuestion(
@@ -830,8 +834,11 @@ async function pickQuestion(category, level = "") {
     } catch (error) {
       alert("Could not share question: " + error.message);
       return;
-    }
+}
+ finally {
+  isPublishingQuestion = false;
   }
+}
 
   currentQuestion = selectedQuestion;
 
