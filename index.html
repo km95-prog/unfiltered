@@ -1336,9 +1336,7 @@ function startGame(mode) {
 
   if (!library || !library[currentMode]) {
     alert("Question library could not be loaded. Please refresh the page.");
-    return;
-  }
-
+    
   showScreen("game");
 
   if (currentPlayStyle === "online" && currentRoom && currentPlayer) {
