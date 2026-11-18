@@ -1366,6 +1366,7 @@ if (!turnStatus) {
 
   Object.keys(library[currentMode]).forEach(category => {
     const button = document.createElement("button");
+    button.dataset.category = category;
     button.textContent = categoryNames[category] || category;
     button.onclick = () => pickQuestion(category);
     categories.appendChild(button);
@@ -1454,7 +1455,8 @@ hasSubmittedAnswer = false;
   isPublishingQuestion = false;
   }
 }
-
+  
+recordCategoryQuestion(category);
   currentQuestion = selectedQuestion;
 
   document.getElementById("categoryTitle").textContent =
