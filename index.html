@@ -776,12 +776,32 @@ function startGame(mode) {
   const categories = document.getElementById("categories");
   categories.innerHTML = "";
 
+  let turnStatus = document.getElementById("turnStatus");
+
+if (!turnStatus) {
+  turnStatus = document.createElement("p");
+  turnStatus.id = "turnStatus";
+  categories.parentNode.insertBefore(turnStatus, categories);
+}
+
   Object.keys(library[currentMode]).forEach(category => {
     const button = document.createElement("button");
     button.textContent = categoryNames[category] || category;
     button.onclick = () => pickQuestion(category);
     categories.appendChild(button);
   });
+
+  if (currentPlayStyle === "online" && currentRoom && currentPlayer) {
+  const isMyTurn = currentPlayer.player_number === 1;
+
+  turnStatus.textContent = isMyTurn
+    ? "✳ YOUR TURN — CHOOSE THE FIRST QUESTION"
+    : "WAITING FOR THE HOST TO CHOOSE";
+
+  categories.querySelectorAll("button").forEach(button => {
+    button.disabled = !isMyTurn;
+  });
+  }
 
   currentQuestion = "";
   currentCategory = "";
@@ -1025,6 +1045,31 @@ document.getElementById("answerStatus").textContent =
       document.getElementById("answerStatus").textContent =
         "Both answers are in!";
     }
+
+    const turnStatus = document.getElementById("turnStatus");
+
+if (turnStatus) {
+  const nextPlayerNumber =
+    round.round_number % 2 === 1 ? 2 : 1;
+
+  const isMyTurn =
+    currentPlayer.player_number === nextPlayerNumber;
+
+  if (result.answers_revealed) {
+    turnStatus.textContent = isMyTurn
+      ? "✳ YOUR TURN — CHOOSE THE NEXT QUESTION"
+      : "WAITING FOR THE OTHER PLAYER TO CHOOSE";
+
+    document.querySelectorAll("#categories button").forEach(button => {
+      button.disabled = !isMyTurn;
+    });
+  } else {
+    turnStatus.textContent = "WAITING FOR BOTH ANSWERS...";
+    document.querySelectorAll("#categories button").forEach(button => {
+      button.disabled = true;
+    });
+  }
+}
 
   } catch (error) {
     console.error("Game update failed:", error);
