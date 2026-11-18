@@ -1653,6 +1653,27 @@ if (turnStatus) {
   }
 }
 
+    const progress = result.category_progress || {};
+
+let progressDisplay = document.getElementById("categoryProgress");
+
+if (!progressDisplay) {
+  progressDisplay = document.createElement("p");
+  progressDisplay.id = "categoryProgress";
+
+  const categories = document.getElementById("categories");
+  categories.parentNode.insertBefore(
+    progressDisplay,
+    categories.nextSibling
+  );
+}
+
+progressDisplay.textContent =
+  "QUESTIONS ANSWERED — " +
+  Object.entries(progress)
+    .map(([category, count]) => `${category}: ${count}`)
+    .join(" • ");
+
   } catch (error) {
     console.error("Game update failed:", error);
   }
