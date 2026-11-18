@@ -1146,6 +1146,10 @@ async function createGameRoom() {
 
     currentRoom = result;
     currentPlayer = result;
+    initialiseCategoryCounts(
+  "unfiltered-" + currentRoom.room_code,
+  true
+);
     
     saveRoomSession();
     
