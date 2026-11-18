@@ -328,6 +328,40 @@ header .tagline {
   color: #e8d5f5;
   text-shadow: 0 0 12px #a855f7;
 }
+
+  /* ✳ UNFILTERED SIGNATURE BUTTONS */
+
+button {
+  min-height: 58px;
+  border-radius: 16px;
+  border: 1px solid #9563b5;
+  background: linear-gradient(145deg, #281632, #160e20);
+  color: #fff7ff;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  box-shadow:
+    0 0 12px #8739c222,
+    inset 0 1px 0 #ffffff12;
+  transition: all 0.2s ease;
+}
+
+button.primary {
+  background: linear-gradient(120deg, #8739c2, #51216f, #8739c2);
+  border: 1px solid #d19aff;
+  box-shadow:
+    0 0 15px #a855f766,
+    inset 0 1px 8px #ffffff25;
+}
+
+button:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 24px #c17affaa;
+}
+
+button:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
   
 </style>
 </head>
