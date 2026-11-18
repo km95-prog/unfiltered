@@ -1037,6 +1037,7 @@ document.getElementById("playerList").textContent =
       "Room restored!";
 
     showScreen("waitingScreen");
+    startMultiplayerGame();
   } catch (error) {
     console.error("Could not restore room:", error);
   }
@@ -1093,6 +1094,7 @@ async function createGameRoom() {
       "Waiting for another player...";
 
     showScreen("waitingScreen");
+    startMultiplayerGame();
 
   } catch (error) {
     alert("Room creation failed: " + error.message);
@@ -1145,6 +1147,7 @@ async function joinGameRoom() {
       "You've joined the room!";
 
     showScreen("waitingScreen");
+    startMultiplayerGame();
 
   } catch (error) {
     alert("Joining room failed: " + error.message);
