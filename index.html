@@ -1201,7 +1201,7 @@ header .tagline {
       <div id="question">
         Choose a category to begin.
       </div>
-<div class="card" id="answerEntry">
+<div class="card hidden" id="answerEntry">
   <p class="small">YOUR ANSWER</p>
   <textarea id="playerAnswer" placeholder="Type your answer privately..." rows="3"></textarea>
   <button class="primary" onclick="submitPrivateAnswer()">SUBMIT ANSWER</button>
@@ -1223,7 +1223,7 @@ header .tagline {
 
 <h3 id="dareStatus">WAITING FOR CHALLENGE...</h3>
 
-  <button id="startDareButton" class="primary"
+  <button id="startDareButton" class="primary hidden"
     onclick="updateDareStatus('in_progress')">
     🔥 START DARE
   </button>
@@ -1238,8 +1238,8 @@ header .tagline {
         <p>Take your time. Be honest. No judgement.</p>
       </div>
 
-      <button class="primary" onclick="newQuestion()">NEXT QUESTION</button>
-      <button onclick="reveal()">REVEAL ANSWER</button>
+      <button id="nextQuestionButton" class="primary hidden" onclick="newQuestion()">NEXT QUESTION</button>
+      <button id="revealButton" class="hidden" onclick="reveal()">REVEAL ANSWER</button>
 
       <div id="timer">60</div>
 
@@ -1609,219 +1609,197 @@ function showJoinScreen() {
   showScreen("joinScreen");
 }
 
-  async function publishSharedQuestion(roundNumber, category, questionText) {
-  const response = await fetch(
-    SUPABASE_URL + "/functions/v1/set-room-question",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_ANON_KEY
-      },
-      body: JSON.stringify({
-        room_code: currentRoom.room_code,
-        player_token: currentPlayer.player_token,
-        round_number: roundNumber,
-        category: category,
-        question_text: questionText
-      })
-    }
-  );
-
-  const result = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.error || "Could not publish question.");
-  }
-
-  return result.round;
-  }
-  
-function startGame(mode) {
-  currentMode = mode.toLowerCase();
-
-  const library = window.UNFILTERED_QUESTIONS;
-
-  if (!library || !library[currentMode]) {
-    alert("Question library could not be loaded. Please refresh the page.");
-  return;
-  }
-  
-  showScreen("game");
-
-  if (currentPlayStyle === "online" && currentRoom && currentPlayer) {
-  startGamePolling();
-  }
-  
-  document.getElementById("modeTitle").textContent =
-    mode.toUpperCase() + " MODE";
-
-  document.getElementById("question").textContent =
-    "Choose a category to begin.";
-  document.getElementById("categoryTitle").textContent = "YOUR QUESTION";
-  document.getElementById("answer").classList.add("hidden");
-
-  const categories = document.getElementById("categories");
-  categories.innerHTML = "";
-
-  let turnStatus = document.getElementById("turnStatus");
-
-if (!turnStatus) {
-  turnStatus = document.createElement("p");
-  turnStatus.id = "turnStatus";
-  categories.parentNode.insertBefore(turnStatus, categories);
+function isOnlineGame() {
+  return currentPlayStyle === "online" && !!currentRoom && !!currentPlayer;
 }
 
-  Object.keys(library[currentMode]).forEach(category => {
+function gameLibrary() {
+  return window.UNFILTERED_QUESTIONS?.[currentMode] || {};
+}
+
+function categoryLabel(category) {
+  return categoryNames[category] || category;
+}
+
+function renderCategories() {
+  const categories = document.getElementById("categories");
+  categories.innerHTML = "";
+  Object.keys(gameLibrary()).forEach(category => {
     const button = document.createElement("button");
     button.dataset.category = category;
-    button.textContent = categoryNames[category] || category;
+    button.textContent = categoryLabel(category);
     button.onclick = () => pickQuestion(category);
     categories.appendChild(button);
   });
+}
 
-  if (currentPlayStyle === "online" && currentRoom && currentPlayer) {
-  const isMyTurn = currentPlayer.player_number === 1;
-
-  turnStatus.textContent = isMyTurn
-    ? "✳ YOUR TURN — CHOOSE THE FIRST QUESTION"
-    : "WAITING FOR THE HOST TO CHOOSE";
-
-  categories.querySelectorAll("button").forEach(button => {
-    button.disabled = !isMyTurn;
+function setCategoryAccess(enabled) {
+  document.querySelectorAll("#categories button").forEach(button => {
+    button.disabled = !enabled;
   });
+}
+
+function showCategoryChoices(enabled) {
+  const categories = document.getElementById("categories");
+  if (!categories.querySelector("[data-category]") ||
+      categories.querySelectorAll("[data-category]").length !== Object.keys(gameLibrary()).length) {
+    renderCategories();
+  }
+  setCategoryAccess(enabled);
+}
+
+function setRoundDisplay(category, question) {
+  document.getElementById("categoryTitle").textContent = categoryLabel(category);
+  document.getElementById("question").textContent = question;
+  document.getElementById("answer").classList.add("hidden");
+}
+
+function resetAnswerEntry() {
+  document.getElementById("playerAnswer").value = "";
+  document.getElementById("playerAnswer").disabled = false;
+  const submit = document.querySelector("#answerEntry button");
+  submit.disabled = false;
+  submit.textContent = "SUBMIT ANSWER";
+  document.getElementById("answerStatus").textContent =
+    "Your answer will stay private until both players have submitted.";
+  document.getElementById("answerReveal").classList.add("hidden");
+  hasSubmittedAnswer = false;
+}
+
+function startGame(mode) {
+  currentMode = mode.toLowerCase();
+  if (!window.UNFILTERED_QUESTIONS || !window.UNFILTERED_QUESTIONS[currentMode]) {
+    alert("Question library could not be loaded. Please refresh the page.");
+    return;
   }
 
+  showScreen("game");
+  document.getElementById("modeTitle").textContent = currentMode.toUpperCase() + " MODE";
+  const categories = document.getElementById("categories");
+  let turnStatus = document.getElementById("turnStatus");
+  if (!turnStatus) {
+    turnStatus = document.createElement("p");
+    turnStatus.id = "turnStatus";
+    categories.parentNode.insertBefore(turnStatus, categories);
+  }
+  renderCategories();
   currentQuestion = "";
   currentCategory = "";
   currentLevel = "";
+  document.getElementById("answerEntry").classList.add("hidden");
+  document.getElementById("answerReveal").classList.add("hidden");
+  document.getElementById("darePanel").classList.add("hidden");
+  document.getElementById("nextQuestionButton").classList.add("hidden");
+  document.getElementById("revealButton").classList.add("hidden");
+  setRoundDisplay("YOUR QUESTION", "Choose a category to begin.");
+
+  if (isOnlineGame()) {
+    const firstTurn = Number(currentPlayer.player_number) === 1;
+    turnStatus.textContent = firstTurn
+      ? "✳ YOUR TURN — CHOOSE THE FIRST QUESTION"
+      : "WAITING FOR THE HOST TO CHOOSE";
+    setCategoryAccess(firstTurn);
+    startGamePolling();
+    checkGameState();
+  } else {
+    turnStatus.textContent = "CHOOSE A CATEGORY";
+    setCategoryAccess(true);
+    document.getElementById("nextQuestionButton").classList.remove("hidden");
+    document.getElementById("revealButton").classList.remove("hidden");
+  }
 }
 
 async function pickQuestion(category, level = "") {
-  const library = window.UNFILTERED_QUESTIONS[currentMode];
+  if (isPublishingQuestion) return;
+  if (isOnlineGame() && !canChooseQuestion) return;
+
+  const library = gameLibrary();
   let list = library[category];
-
-  currentCategory = category;
-  currentLevel = level;
-
   if (category === "dareMe" && !level) {
     showDareLevels();
     return;
   }
-
-  if (category === "dareMe" && level) {
-    list = list[level];
-  }
-
-  if (!Array.isArray(list) || list.length === 0) {
+  if (category === "dareMe") list = list?.[level];
+  if (!Array.isArray(list) || !list.length) {
     alert("This category could not be loaded.");
     return;
   }
 
-  let choices = list.filter(question => question !== currentQuestion);
+  const choices = list.filter(question => question !== currentQuestion);
+  const pool = choices.length ? choices : list;
+  const selectedQuestion = pool[Math.floor(Math.random() * pool.length)];
 
-  if (choices.length === 0) choices = list;
-
-  const selectedQuestion =
-    choices[Math.floor(Math.random() * choices.length)];
-
-  if (currentPlayStyle === "online" && currentRoom && currentPlayer) {
-    if (isPublishingQuestion) return;
+  if (isOnlineGame()) {
     isPublishingQuestion = true;
-try {
-  
-      const nextRound = currentRoundNumber + 1;
-
+    setCategoryAccess(false);
+    try {
       const round = await publishSharedQuestion(
-        nextRound,
-        category,
-        selectedQuestion
+        currentRoundNumber + 1, category, selectedQuestion
       );
-
       currentRoundId = round.id;
-      currentRoundNumber = nextRound;
-  
-  document.getElementById("playerAnswer").value = "";
-document.getElementById("playerAnswer").disabled = false;
-
-const submitButton = document.querySelector("#answerEntry button");
-submitButton.disabled = false;
-submitButton.textContent = "SUBMIT ANSWER";
-
-document.getElementById("answerStatus").textContent =
-  "Your answer will stay private until both players have submitted.";
-
-document.getElementById("answerEntry").classList.remove("hidden");
-document.getElementById("answerReveal").classList.add("hidden");
-
-hasSubmittedAnswer = false;
+      currentRoundNumber = Number(round.round_number) || currentRoundNumber + 1;
+      currentQuestion = selectedQuestion;
+      currentCategory = category;
+      currentLevel = level;
+      canChooseQuestion = false;
+      resetAnswerEntry();
+      renderCategories();
+      setCategoryAccess(false);
+      setRoundDisplay(category, selectedQuestion);
+      document.getElementById("answerEntry").classList.toggle("hidden", category === "dareMe");
+      document.getElementById("darePanel").classList.toggle("hidden", category !== "dareMe");
+      document.getElementById("turnStatus").textContent =
+        category === "dareMe" ? "WAITING FOR DARE ACCEPTANCE..." : "WAITING FOR BOTH ANSWERS...";
+      if (category === "dareMe") {
+        document.getElementById("dareChallenger").textContent = "YOU ARE THE CHALLENGER";
+        document.getElementById("dareStatus").textContent = "WAITING FOR CHALLENGE...";
+        document.getElementById("acceptDareButton").classList.remove("hidden");
+        document.getElementById("startDareButton").classList.add("hidden");
+        document.getElementById("completeDareButton").classList.add("hidden");
+      }
+      await checkGameState();
     } catch (error) {
       alert("Could not share question: " + error.message);
-      return;
-}
- finally {
-  isPublishingQuestion = false;
+      await checkGameState();
+    } finally {
+      isPublishingQuestion = false;
+    }
+  } else {
+    currentQuestion = selectedQuestion;
+    currentCategory = category;
+    currentLevel = level;
+    setRoundDisplay(category, selectedQuestion);
+    document.getElementById("answerEntry").classList.add("hidden");
+    document.getElementById("darePanel").classList.add("hidden");
   }
-}
-  
-if (category === "dareMe" && currentPlayStyle === "online") {
-  document.getElementById("darePanel").classList.remove("hidden");
-  document.getElementById("dareChallenger").textContent =
-    "YOU ARE THE CHALLENGER";
-
-  document.getElementById("dareStatus").textContent =
-    "😈 CHALLENGE ACCEPTED";
-
-  document.getElementById("startDareButton").classList.remove("hidden");
-  document.getElementById("completeDareButton").classList.add("hidden");
-
-  document.getElementById("answerEntry").classList.add("hidden");
-  document.getElementById("answerReveal").classList.add("hidden");
-
-} else {
-  document.getElementById("darePanel").classList.add("hidden");
-}
-
-recordCategoryQuestion(category);
-  currentQuestion = selectedQuestion;
-
-  document.getElementById("categoryTitle").textContent =
-    (categoryNames[category] || category) +
-    (level ? " — " + level.toUpperCase() : "");
-
-  document.getElementById("question").textContent = currentQuestion;
-  document.getElementById("answer").classList.add("hidden");
+  if (typeof recordCategoryQuestion === "function") {
+    recordCategoryQuestion(category);
+  }
 }
 
 function showDareLevels() {
+  if (isOnlineGame() && !canChooseQuestion) return;
   const categories = document.getElementById("categories");
   categories.innerHTML = "";
-
-  document.getElementById("categoryTitle").textContent = "CHOOSE YOUR DARE LEVEL";
-  document.getElementById("question").textContent =
-    "How daring are you feeling?";
-
-  document.getElementById("answer").classList.add("hidden");
-
+  setRoundDisplay("CHOOSE YOUR DARE LEVEL", "How daring are you feeling?");
   ["mild", "wild", "unfiltered"].forEach(level => {
     const button = document.createElement("button");
     button.textContent = level.toUpperCase();
     button.onclick = () => pickQuestion("dareMe", level);
     categories.appendChild(button);
   });
-
-  const backButton = document.createElement("button");
-  backButton.textContent = "BACK TO CATEGORIES";
-  backButton.onclick = () => startGame(
-    currentMode === "friends" ? "Friends" : "Lovers"
-  );
-  categories.appendChild(backButton);
+  const back = document.createElement("button");
+  back.textContent = "BACK TO CATEGORIES";
+  back.onclick = () => {
+    renderCategories();
+    setCategoryAccess(!isOnlineGame() || canChooseQuestion);
+  };
+  categories.appendChild(back);
 }
 
 function newQuestion() {
-  if (!currentCategory) return;
-
-  pickQuestion(currentCategory, currentLevel);
+  if (isOnlineGame()) return;
+  if (currentCategory) pickQuestion(currentCategory, currentLevel);
 }
 
 async function submitPrivateAnswer() {
@@ -1880,15 +1858,15 @@ async function submitPrivateAnswer() {
 }
 
 async function updateDareStatus(dareStatus) {
-  if (!currentRoom || !currentPlayer) return;
-
-  const buttonId = dareStatus === "in_progress"
-    ? "startDareButton"
-    : "completeDareButton";
-
+  if (!isOnlineGame()) return;
+  const buttonId = {
+    accepted: "acceptDareButton",
+    in_progress: "startDareButton",
+    completed: "completeDareButton"
+  }[dareStatus];
   const button = document.getElementById(buttonId);
-  if (button) button.disabled = true;
-
+  if (!button) return;
+  button.disabled = true;
   try {
     const response = await fetch(
       SUPABASE_URL + "/functions/v1/update-dare-status",
@@ -1905,27 +1883,23 @@ async function updateDareStatus(dareStatus) {
         })
       }
     );
-
     const result = await response.json();
-
     if (!response.ok || !result.success) {
       throw new Error(result.error || "Could not update dare.");
     }
-
     await checkGameState();
-
   } catch (error) {
     alert("Dare update failed: " + error.message);
   } finally {
-    if (button) button.disabled = false;
+    button.disabled = false;
   }
 }
 
-  async function checkGameState() {
-  if (!currentRoom || !currentPlayer) return;
-  if (isCheckingGameState) return;
-isCheckingGameState = true;
+let canChooseQuestion = false;
 
+async function checkGameState() {
+  if (!isOnlineGame() || isCheckingGameState) return;
+  isCheckingGameState = true;
   try {
     const response = await fetch(
       SUPABASE_URL + "/functions/v1/room-status",
@@ -1941,180 +1915,129 @@ isCheckingGameState = true;
         })
       }
     );
-
     const result = await response.json();
-
-    if (!response.ok || !result.success) return;
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "Could not load room status.");
+    }
 
     const round = result.current_round;
-
-if (!round) return;
-
-currentRoundNumber = round.round_number;
-
-if (round.id !== currentRoundId) {
-      currentRoundId = round.id;
-      currentRoundNumber = round.round_number;
-      currentQuestion = round.question_text;
-      currentCategory = round.category;
-
-      document.getElementById("question").textContent =
-        round.question_text;
-
-      document.getElementById("categoryTitle").textContent =
-        round.category;
-
-      document.getElementById("playerAnswer").value = "";
-      document.getElementById("playerAnswer").disabled = false;
-      
-      const submitButton = document.querySelector("#answerEntry button");
-submitButton.disabled = false;
-submitButton.textContent = "SUBMIT ANSWER";
-
-document.getElementById("answerStatus").textContent =
-  "Your answer will stay private until both players have submitted.";
-
-      document.getElementById("answerEntry").classList.remove("hidden");
-      document.getElementById("answerReveal").classList.add("hidden");
-
-      hasSubmittedAnswer = false;
-    }
-
-   
-if (
-  result.answers_revealed ||
-  (round.category === "dareMe" && round.dare_status === "completed")
-) {
-
-      const playerOne = result.answers.find(
-        answer => answer.player_number === 1
-      );
-
-      const playerTwo = result.answers.find(
-        answer => answer.player_number === 2
-      );
-
-      document.getElementById("playerOneAnswer").textContent =
-        playerOne ? playerOne.answer : "";
-
-      document.getElementById("playerTwoAnswer").textContent =
-        playerTwo ? playerTwo.answer : "";
-
-      document.getElementById("answerReveal").classList.remove("hidden");
-     document.getElementById("answerEntry").classList.add("hidden");
-      document.getElementById("answerStatus").textContent =
-        "Both answers are in!";
-    }
-
-const darePanel = document.getElementById("darePanel");
-
-if (round.category === "dareMe") {
-  darePanel.classList.remove("hidden");
-
-  const challenger = (result.players || []).find(
-    player =>
-      player.player_number === round.challenger_player_number
-  );
-
-  const isChallenger =
-    currentPlayer.player_number ===
-    round.challenger_player_number;
-
-  document.getElementById("dareChallenger").textContent =
-    (challenger ? challenger.display_name : "Player") +
-    " IS THE CHALLENGER";
-document.getElementById("acceptDareButton")
-  .classList.toggle(
-    "hidden",
-    !isChallenger || round.dare_status !== "pending"
-  );
-  
-  const statusText = {
-    accepted: "😈 CHALLENGE ACCEPTED",
-    in_progress: "🔥 DARE IN PROGRESS",
-    completed: "✳ DARE COMPLETED"
-  };
-
-  document.getElementById("dareStatus").textContent =
-    statusText[round.dare_status] || "😈 CHALLENGE ACCEPTED";
-
-  document.getElementById("startDareButton")
-    .classList.toggle(
-      "hidden",
-      !isChallenger || round.dare_status !== "accepted"
-    );
-
-  document.getElementById("completeDareButton")
-    .classList.toggle(
-      "hidden",
-      !isChallenger || round.dare_status !== "in_progress"
-    );
-
-
-document.getElementById("answerEntry").classList.toggle(
-  "hidden",
-  round.category === "dareMe"
-);
-
-  document.getElementById("answerReveal")
-    .classList.add("hidden");
-
-} else {
-  darePanel.classList.add("hidden");
-}
-
     const turnStatus = document.getElementById("turnStatus");
+    const me = Number(currentPlayer.player_number);
 
-if (turnStatus) {
-  const nextPlayerNumber =
-    round.round_number % 2 === 1 ? 2 : 1;
+    if (!round) {
+      canChooseQuestion = me === 1;
+      showCategoryChoices(canChooseQuestion);
+      turnStatus.textContent = canChooseQuestion
+        ? "✳ YOUR TURN — CHOOSE THE FIRST QUESTION"
+        : "WAITING FOR THE HOST TO CHOOSE";
+      return;
+    }
 
-  const isMyTurn =
-    currentPlayer.player_number === nextPlayerNumber;
+    const newRound = round.id !== currentRoundId;
+    currentRoundId = round.id;
+    currentRoundNumber = Number(round.round_number) || 0;
+    currentQuestion = round.question_text;
+    currentCategory = round.category;
 
-  if (result.answers_revealed) {
-    turnStatus.textContent = isMyTurn
-      ? "✳ YOUR TURN — CHOOSE THE NEXT QUESTION"
-      : "WAITING FOR THE OTHER PLAYER TO CHOOSE";
+    if (newRound) {
+      currentLevel = "";
+      resetAnswerEntry();
+      renderCategories();
+    }
+    setRoundDisplay(round.category, round.question_text);
+    const isDare = round.category === "dareMe";
+    const isComplete = isDare
+      ? round.dare_status === "completed"
+      : Boolean(result.answers_revealed);
+    const nextPlayer = currentRoundNumber % 2 === 1 ? 2 : 1;
+    canChooseQuestion = isComplete && me === nextPlayer;
+    showCategoryChoices(canChooseQuestion);
 
-    document.querySelectorAll("#categories button").forEach(button => {
-      button.disabled = !isMyTurn;
-    });
-  } else {
-    turnStatus.textContent = "WAITING FOR BOTH ANSWERS...";
-    document.querySelectorAll("#categories button").forEach(button => {
-      button.disabled = true;
-    });
-  }
-}
+    if (isComplete) {
+      turnStatus.textContent = canChooseQuestion
+        ? "✳ YOUR TURN — CHOOSE THE NEXT QUESTION"
+        : "WAITING FOR THE OTHER PLAYER TO CHOOSE";
+    } else {
+      turnStatus.textContent = isDare
+        ? "DARE IN PROGRESS — WAITING FOR COMPLETION"
+        : "WAITING FOR BOTH ANSWERS...";
+    }
+
+    document.getElementById("nextQuestionButton").classList.add("hidden");
+    document.getElementById("revealButton").classList.add("hidden");
+
+    const darePanel = document.getElementById("darePanel");
+    darePanel.classList.toggle("hidden", !isDare);
+    const answerEntry = document.getElementById("answerEntry");
+    const answerReveal = document.getElementById("answerReveal");
+
+    if (isDare) {
+      answerEntry.classList.add("hidden");
+      answerReveal.classList.add("hidden");
+      const challenger = (result.players || []).find(
+        player => Number(player.player_number) === Number(round.challenger_player_number)
+      );
+      const isChallenger = me === Number(round.challenger_player_number);
+      document.getElementById("dareChallenger").textContent =
+        (challenger ? challenger.display_name : "Player") + " IS THE CHALLENGER";
+      const statuses = {
+        pending: "WAITING FOR CHALLENGE...",
+        accepted: "😈 CHALLENGE ACCEPTED",
+        in_progress: "🔥 DARE IN PROGRESS",
+        completed: "✳ DARE COMPLETED"
+      };
+      document.getElementById("dareStatus").textContent =
+        statuses[round.dare_status] || "WAITING FOR CHALLENGE...";
+      document.getElementById("acceptDareButton").classList.toggle(
+        "hidden", !isChallenger || round.dare_status !== "pending"
+      );
+      document.getElementById("startDareButton").classList.toggle(
+        "hidden", !isChallenger || round.dare_status !== "accepted"
+      );
+      document.getElementById("completeDareButton").classList.toggle(
+        "hidden", !isChallenger || round.dare_status !== "in_progress"
+      );
+    } else {
+      const answers = Array.isArray(result.answers) ? result.answers : [];
+      const mine = answers.find(answer => Number(answer.player_number) === me);
+      if (mine && !hasSubmittedAnswer) {
+        hasSubmittedAnswer = true;
+        document.getElementById("playerAnswer").disabled = true;
+        const submit = document.querySelector("#answerEntry button");
+        submit.disabled = true;
+        submit.textContent = "ANSWER SUBMITTED";
+        document.getElementById("answerStatus").textContent =
+          "Answer submitted privately. Waiting for the other player...";
+      }
+      answerEntry.classList.toggle("hidden", isComplete);
+      answerReveal.classList.toggle("hidden", !isComplete);
+      if (isComplete) {
+        const one = answers.find(answer => Number(answer.player_number) === 1);
+        const two = answers.find(answer => Number(answer.player_number) === 2);
+        document.getElementById("playerOneAnswer").textContent =
+          one ? "PLAYER 1: " + one.answer : "PLAYER 1: No answer";
+        document.getElementById("playerTwoAnswer").textContent =
+          two ? "PLAYER 2: " + two.answer : "PLAYER 2: No answer";
+      }
+    }
 
     const progress = result.category_progress || {};
-
-let progressDisplay = document.getElementById("categoryProgress");
-
-if (!progressDisplay) {
-  progressDisplay = document.createElement("p");
-  progressDisplay.id = "categoryProgress";
-
-  const categories = document.getElementById("categories");
-  categories.parentNode.insertBefore(
-    progressDisplay,
-    categories.nextSibling
-  );
-}
-
-progressDisplay.textContent =
-  "QUESTIONS ANSWERED — " +
-  Object.entries(progress)
-    .map(([category, count]) => `${category}: ${count}`)
-    .join(" • ");
-
+    let progressDisplay = document.getElementById("categoryProgress");
+    if (!progressDisplay) {
+      progressDisplay = document.createElement("p");
+      progressDisplay.id = "categoryProgress";
+      document.getElementById("categories").insertAdjacentElement("afterend", progressDisplay);
+    }
+    progressDisplay.textContent = "QUESTIONS ANSWERED — " +
+      Object.entries(progress).map(([category, count]) =>
+        categoryLabel(category) + ": " + count
+      ).join(" • ");
   } catch (error) {
-  console.error("Game update failed:", error);
-} finally {
-  isCheckingGameState = false;
-}
+    console.error("Game update failed:", error);
+  } finally {
+    isCheckingGameState = false;
   }
+}
 
 function startGamePolling() {
   if (gamePoll) clearInterval(gamePoll);
@@ -2163,6 +2086,8 @@ function stopTimer() {
 
 function goHome() {
   stopTimer();
+  if (gamePoll) clearInterval(gamePoll);
+  gamePoll = null;
   document.getElementById("game").classList.add("hidden");
   document.getElementById("home").classList.remove("hidden");
 }
