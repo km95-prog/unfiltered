@@ -1213,6 +1213,21 @@ header .tagline {
   <p id="playerOneAnswer"></p>
   <p id="playerTwoAnswer"></p>
 </div>
+     
+<div id="darePanel" class="card hidden">
+  <p class="small" id="dareChallenger"></p>
+  <h3 id="dareStatus">😈 CHALLENGE ACCEPTED</h3>
+
+  <button id="startDareButton" class="primary"
+    onclick="updateDareStatus('in_progress')">
+    🔥 START DARE
+  </button>
+
+  <button id="completeDareButton" class="primary hidden"
+    onclick="updateDareStatus('completed')">
+    ✳ I DID IT!
+  </button>
+</div>
       
       <div id="answer" class="hidden">
         <p>Take your time. Be honest. No judgement.</p>
@@ -1744,6 +1759,24 @@ hasSubmittedAnswer = false;
   }
 }
   
+if (category === "dareMe" && currentPlayStyle === "online") {
+  document.getElementById("darePanel").classList.remove("hidden");
+  document.getElementById("dareChallenger").textContent =
+    "YOU ARE THE CHALLENGER";
+
+  document.getElementById("dareStatus").textContent =
+    "😈 CHALLENGE ACCEPTED";
+
+  document.getElementById("startDareButton").classList.remove("hidden");
+  document.getElementById("completeDareButton").classList.add("hidden");
+
+  document.getElementById("answerEntry").classList.add("hidden");
+  document.getElementById("answerReveal").classList.add("hidden");
+
+} else {
+  document.getElementById("darePanel").classList.add("hidden");
+}
+
 recordCategoryQuestion(category);
   currentQuestion = selectedQuestion;
 
@@ -1841,6 +1874,48 @@ async function submitPrivateAnswer() {
   }
 }
 
+async function updateDareStatus(dareStatus) {
+  if (!currentRoom || !currentPlayer) return;
+
+  const buttonId = dareStatus === "in_progress"
+    ? "startDareButton"
+    : "completeDareButton";
+
+  const button = document.getElementById(buttonId);
+  if (button) button.disabled = true;
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/update-dare-status",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          room_code: currentRoom.room_code,
+          player_token: currentPlayer.player_token,
+          dare_status: dareStatus
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "Could not update dare.");
+    }
+
+    await checkGameState();
+
+  } catch (error) {
+    alert("Dare update failed: " + error.message);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
   async function checkGameState() {
   if (!currentRoom || !currentPlayer) return;
   if (isCheckingGameState) return;
@@ -1900,7 +1975,12 @@ document.getElementById("answerStatus").textContent =
       hasSubmittedAnswer = false;
     }
 
-   if (result.answers_revealed && result.answers) {
+   
+if (
+  result.answers_revealed ||
+  (round.category === "dareMe" && round.dare_status === "completed")
+) {
+
       const playerOne = result.answers.find(
         answer => answer.player_number === 1
       );
@@ -1920,6 +2000,58 @@ document.getElementById("answerStatus").textContent =
       document.getElementById("answerStatus").textContent =
         "Both answers are in!";
     }
+
+const darePanel = document.getElementById("darePanel");
+
+if (round.category === "dareMe") {
+  darePanel.classList.remove("hidden");
+
+  const challenger = (result.players || []).find(
+    player =>
+      player.player_number === round.challenger_player_number
+  );
+
+  const isChallenger =
+    currentPlayer.player_number ===
+    round.challenger_player_number;
+
+  document.getElementById("dareChallenger").textContent =
+    (challenger ? challenger.display_name : "Player") +
+    " IS THE CHALLENGER";
+
+  const statusText = {
+    accepted: "😈 CHALLENGE ACCEPTED",
+    in_progress: "🔥 DARE IN PROGRESS",
+    completed: "✳ DARE COMPLETED"
+  };
+
+  document.getElementById("dareStatus").textContent =
+    statusText[round.dare_status] || "😈 CHALLENGE ACCEPTED";
+
+  document.getElementById("startDareButton")
+    .classList.toggle(
+      "hidden",
+      !isChallenger || round.dare_status !== "accepted"
+    );
+
+  document.getElementById("completeDareButton")
+    .classList.toggle(
+      "hidden",
+      !isChallenger || round.dare_status !== "in_progress"
+    );
+
+
+document.getElementById("answerEntry").classList.toggle(
+  "hidden",
+  round.category === "dareMe"
+);
+
+  document.getElementById("answerReveal")
+    .classList.add("hidden");
+
+} else {
+  darePanel.classList.add("hidden");
+}
 
     const turnStatus = document.getElementById("turnStatus");
 
