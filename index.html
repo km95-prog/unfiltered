@@ -1216,7 +1216,12 @@ header .tagline {
      
 <div id="darePanel" class="card hidden">
   <p class="small" id="dareChallenger"></p>
-  <h3 id="dareStatus">😈 CHALLENGE ACCEPTED</h3>
+  <button id="acceptDareButton" class="primary"
+  onclick="updateDareStatus('accepted')">
+  😈 CHALLENGE ACCEPTED
+</button>
+
+<h3 id="dareStatus">WAITING FOR CHALLENGE...</h3>
 
   <button id="startDareButton" class="primary"
     onclick="updateDareStatus('in_progress')">
@@ -2018,7 +2023,12 @@ if (round.category === "dareMe") {
   document.getElementById("dareChallenger").textContent =
     (challenger ? challenger.display_name : "Player") +
     " IS THE CHALLENGER";
-
+document.getElementById("acceptDareButton")
+  .classList.toggle(
+    "hidden",
+    !isChallenger || round.dare_status !== "pending"
+  );
+  
   const statusText = {
     accepted: "😈 CHALLENGE ACCEPTED",
     in_progress: "🔥 DARE IN PROGRESS",
