@@ -1865,9 +1865,11 @@ async function submitPrivateAnswer() {
 
     const round = result.current_round;
 
-    if (!round) return;
+if (!round) return;
 
-    if (round.id !== currentRoundId) {
+currentRoundNumber = round.round_number;
+
+if (round.id !== currentRoundId) {
       currentRoundId = round.id;
       currentRoundNumber = round.round_number;
       currentQuestion = round.question_text;
