@@ -830,6 +830,265 @@ header .tagline {
     inset 0 0 20px #a855f711;
 }
 
+
+/* ✳ UNFILTERED — FINAL GAMEPLAY POLISH */
+
+/* THE CATEGORY AREA */
+#game > p:not(.small) {
+  text-align: center;
+  color: #d9c2e8;
+  letter-spacing: 1px;
+  margin: 12px 0 18px;
+}
+
+#game #categories {
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+#game #categories button {
+  position: relative;
+  min-height: 66px;
+  padding: 15px 12px;
+  border: 1px solid #80549b;
+  border-radius: 17px;
+  background:
+    radial-gradient(ellipse at 50% 0%, #71339b33, transparent 75%),
+    linear-gradient(145deg, #281632, #160e20);
+  color: #f5eaff;
+  font-size: 13px;
+  letter-spacing: 0.4px;
+  box-shadow:
+    0 0 12px #8739c222,
+    inset 0 0 12px #a855f711;
+  transition: all 0.2s ease;
+}
+
+#game #categories button::before {
+  content: "✧";
+  display: block;
+  color: #bd79ff;
+  font-size: 15px;
+  margin-bottom: 4px;
+  text-shadow: 0 0 10px #a855f7;
+}
+
+#game #categories button:focus,
+#game #categories button:active {
+  outline: none;
+  border-color: #e0b4ff;
+  background:
+    radial-gradient(ellipse at 50% 0%, #a855f755, transparent 75%),
+    linear-gradient(145deg, #49245e, #21102f);
+  box-shadow:
+    0 0 18px #a855f788,
+    inset 0 0 15px #d49aff22;
+}
+
+/* THE TURN INDICATOR */
+#game #turnStatus {
+  padding: 14px 12px;
+  margin: 18px 0;
+  border: 1px solid #9562ad;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #281632, #140d1d);
+  color: #e6c8ff;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1.2px;
+  line-height: 1.7;
+  text-shadow: 0 0 10px #a855f7;
+  box-shadow: 0 0 16px #8739c233;
+}
+
+/* THE QUESTION PANEL */
+#game #categoryTitle {
+  margin-top: 8px;
+  margin-bottom: 22px;
+  color: #e7c5ff;
+  font-size: 15px;
+  letter-spacing: 3px;
+}
+
+#game #question {
+  min-height: 145px;
+  padding: 28px 18px;
+  border: 1px solid #b17acb;
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 50% 0%, #71339b66, transparent 75%),
+    linear-gradient(155deg, #2b1838, #100b19);
+  color: #fffaff;
+  font-size: clamp(20px, 5vw, 25px);
+  line-height: 1.65;
+  box-shadow:
+    0 0 24px #8739c255,
+    inset 0 0 25px #a855f718;
+}
+
+#game #question::after {
+  content: "✧  ✳  ✧";
+  display: block;
+  color: #bd79ff;
+  font-size: 15px;
+  letter-spacing: 5px;
+  margin-top: 18px;
+  text-shadow: 0 0 12px #a855f7;
+}
+
+/* THE PRIVATE ANSWER PANEL */
+#game #answerEntry {
+  margin-top: 24px;
+  padding: 22px 18px;
+  border-color: #9562ad;
+  box-shadow:
+    0 0 20px #8739c233,
+    inset 0 0 22px #a855f711;
+}
+
+#game #answerEntry > p:first-child {
+  color: #e3baff;
+  text-align: center;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+/* THE ANSWER REVEAL MOMENT */
+#game #answerReveal {
+  margin: 22px 0;
+  padding: 25px 18px;
+  border: 1px solid #d19aff;
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 50% 0%, #8739c266, transparent 75%),
+    linear-gradient(150deg, #321b43, #120b1c);
+  box-shadow:
+    0 0 25px #a855f766,
+    inset 0 0 25px #d49aff18;
+}
+
+#game #answerReveal h3 {
+  font-size: 17px;
+  line-height: 1.6;
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #f0d9ff;
+}
+
+#game #answerReveal p {
+  padding: 14px;
+  margin: 12px 0;
+  border: 1px solid #80549b;
+  border-radius: 13px;
+  background: #160e20;
+  color: #f5eaff;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+/* CATEGORY PROGRESS DISPLAY */
+#game #categoryProgress {
+  padding: 17px 14px;
+  margin: 20px 0;
+  border: 1px solid #80549b;
+  border-radius: 17px;
+  background:
+    radial-gradient(ellipse at 50% 0%, #71339b33, transparent 75%),
+    linear-gradient(145deg, #24152f, #100b19);
+  color: #e5c8f5;
+  font-size: 12px;
+  line-height: 2;
+  text-align: center;
+  letter-spacing: 0.5px;
+  overflow-wrap: anywhere;
+  box-shadow:
+    0 0 18px #8739c233,
+    inset 0 0 15px #a855f711;
+}
+
+#game #categoryProgress::before {
+  content: "✳ YOUR GAME PROGRESS ✳";
+  display: block;
+  margin-bottom: 8px;
+  color: #d49aff;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px #a855f7;
+}
+
+/* THE TIMER */
+#game #timer {
+  padding: 15px;
+  margin: 22px auto 12px;
+  width: 125px;
+  border: 1px solid #9562ad;
+  border-radius: 50%;
+  background: radial-gradient(circle, #392044, #140d1d 75%);
+  color: #e3baff;
+  font-size: 38px;
+  font-weight: 900;
+  text-shadow:
+    0 0 12px #bd79ff,
+    0 0 25px #8739c2;
+  box-shadow:
+    0 0 20px #8739c255,
+    inset 0 0 15px #a855f722;
+}
+
+#game #timer::before {
+  content: "TIME";
+  display: block;
+  margin-bottom: 3px;
+  color: #c9a4df;
+  font-size: 10px;
+  letter-spacing: 3px;
+}
+
+/* GAMEPLAY BUTTON FINISHING */
+#game > button {
+  margin-bottom: 14px;
+}
+
+#game button {
+  touch-action: manipulation;
+}
+
+#game button.primary {
+  border-color: #d8adff;
+  box-shadow:
+    0 0 18px #a855f766,
+    inset 0 1px 8px #ffffff25;
+}
+
+/* SMALL SCREEN SPACING */
+@media (max-width: 380px) {
+  #game {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  #game #categories {
+    gap: 9px;
+  }
+
+  #game #categories button {
+    min-height: 62px;
+    padding: 12px 7px;
+    font-size: 12px;
+  }
+
+  #game #question {
+    padding: 22px 13px;
+    font-size: 20px;
+  }
+
+  #game #answerEntry {
+    padding: 18px 13px;
+  }
+}
+
 </style>
 </head>
 <body>
