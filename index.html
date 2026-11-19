@@ -1979,6 +1979,17 @@ function startGamePolling() {
 
   gamePoll = setInterval(checkGameState, 3000);
 }
+
+  document.addEventListener("visibilitychange", () => {
+  if (
+    !document.hidden &&
+    currentPlayStyle === "online" &&
+    currentRoom &&
+    currentPlayer
+  ) {
+    checkGameState();
+  }
+});
   
   function reveal() {
   document.getElementById("answer").classList.toggle("hidden");
