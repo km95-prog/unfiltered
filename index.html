@@ -1271,6 +1271,7 @@ let currentRoom = null;
 let currentPlayer = null;
 let currentRoundId = null;
 let gamePoll = null; 
+let isCheckingGameState = false;
 let isPublishingQuestion = false;
 let hasSubmittedAnswer = false;
 let currentRoundNumber = 0;
@@ -1842,6 +1843,8 @@ async function submitPrivateAnswer() {
 
   async function checkGameState() {
   if (!currentRoom || !currentPlayer) return;
+  if (isCheckingGameState) return;
+isCheckingGameState = true;
 
   try {
     const response = await fetch(
@@ -1965,9 +1968,11 @@ progressDisplay.textContent =
     .join(" • ");
 
   } catch (error) {
-    console.error("Game update failed:", error);
-  }
+  console.error("Game update failed:", error);
+} finally {
+  isCheckingGameState = false;
 }
+  }
 
 function startGamePolling() {
   if (gamePoll) clearInterval(gamePoll);
