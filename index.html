@@ -1157,6 +1157,14 @@ footer{padding:20px 10px 34px;color:#a887b9;font-size:10px;letter-spacing:1.7px}
 @media(max-width:380px){main{padding:10px 12px 38px}#game #categories{gap:8px}#game #categories button{font-size:11px;min-height:79px;padding:10px 6px}#displayRoomCode{letter-spacing:4px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
+/* Dare Me proof methods */
+.dare-methods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dare-methods button{font-size:11px;min-height:65px;padding:10px 6px}
+.dare-methods button:last-child{grid-column:1/-1}
+#dareResponsePanel textarea,#dareFile{width:100%;margin:12px 0;padding:13px;background:#150d20;color:#fff;border:1px solid #b77de0;border-radius:14px}
+#dareVoiceControls audio,#dareProofDisplay audio,#dareProofDisplay video{width:100%;margin:12px 0}
+#dareProofDisplay img,#dareProofDisplay video{max-width:100%;border-radius:14px}
+#dareProofDisplay{padding:15px;border:1px solid #b77de0;border-radius:15px;margin-top:15px;overflow-wrap:anywhere}
 /* Voice memo controls */
 .voice-controls{margin-top:16px;padding:16px;border:1px solid #8755a7;border-radius:16px;background:#150e1f;text-align:center}
 .voice-controls audio,.voice-playback audio{display:block;width:100%;margin:12px auto;max-width:100%}
@@ -1363,10 +1371,27 @@ button.primary:not(:disabled):hover{box-shadow:0 0 27px #b767ff80,inset 0 1px 0 
     🔥 START DARE
   </button>
 
-  <button id="completeDareButton" class="primary hidden"
-    onclick="updateDareStatus('completed')">
-    ✳ I DID IT!
-  </button>
+  <div id="dareResponsePanel" class="hidden">
+    <p class="small">HOW WILL YOU COMPLETE YOUR DARE?</p>
+    <div class="dare-methods">
+      <button type="button" onclick="chooseDareMethod('text')">✍️ TYPE AN ANSWER</button>
+      <button type="button" onclick="chooseDareMethod('photo')">📸 UPLOAD PHOTO</button>
+      <button type="button" onclick="chooseDareMethod('voice')">🎙️ RECORD VOICE</button>
+      <button type="button" onclick="chooseDareMethod('video')">🎥 UPLOAD VIDEO</button>
+      <button type="button" onclick="chooseDareMethod('completed')">✅ NO PROOF</button>
+    </div>
+    <p id="dareMethodLabel" class="small"></p>
+    <textarea id="dareText" class="hidden" maxlength="5000" placeholder="Your dare response..."></textarea>
+    <input id="dareFile" class="hidden" type="file" />
+    <div id="dareVoiceControls" class="hidden">
+      <button type="button" id="dareRecord" onclick="startDareRecording()">🔴 START RECORDING</button>
+      <button type="button" id="dareStop" class="hidden" onclick="stopDareRecording()">⏹ STOP RECORDING</button>
+      <audio id="dareVoicePreview" class="hidden" controls></audio>
+    </div>
+    <button type="button" id="completeDareButton" class="primary hidden" onclick="submitDareResponse()">✳ SUBMIT & COMPLETE DARE</button>
+    <p id="dareSubmissionMessage" class="small" role="status"></p>
+  </div>
+  <div id="dareProofDisplay" class="hidden" aria-live="polite"></div>
 </div>
       
       <div id="answer" class="hidden">
@@ -2252,6 +2277,116 @@ async function submitPrivateAnswer() {
   }
 }
 
+let dareMethod = null;
+let dareRecording = null;
+let dareRecordedBlob = null;
+let dareRecordingChunks = [];
+let dareProofLoadedFor = "";
+let dareSubmissionBusy = false;
+function chooseDareMethod(method) {
+  if (dareSubmissionBusy) return;
+  dareMethod = method;
+  dareRecordedBlob = null;
+  document.getElementById("dareText").classList.toggle("hidden",method!=="text");
+  const file = document.getElementById("dareFile");
+  file.value="";
+  file.classList.toggle("hidden",!(["photo","video"].includes(method)));
+  file.accept=method==="photo"?"image/jpeg,image/png,image/webp,image/heic,image/heif":"video/mp4,video/webm,video/quicktime";
+  document.getElementById("dareVoiceControls").classList.toggle("hidden",method!=="voice");
+  document.getElementById("dareVoicePreview").classList.add("hidden");
+  document.getElementById("dareMethodLabel").textContent={text:"Write your answer below",photo:"Choose a photo from your device",voice:"Record a short voice memo",video:"Choose a video (maximum 50 MB)",completed:"No proof needed — confirm completion"}[method];
+  document.getElementById("completeDareButton").classList.remove("hidden");
+  document.getElementById("dareSubmissionMessage").textContent="";
+}
+async function startDareRecording() {
+  try {
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw Error("Voice recording is not supported in this browser.");
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const options=MediaRecorder.isTypeSupported("audio/webm")?{mimeType:"audio/webm"}:{};
+    dareRecordingChunks=[];dareRecordedBlob=null;
+    dareRecording=new MediaRecorder(stream,options);
+    dareRecording.ondataavailable=e=>{if(e.data.size)dareRecordingChunks.push(e.data)};
+    dareRecording.onstop=()=>{
+      dareRecordedBlob=new Blob(dareRecordingChunks,{type:dareRecording.mimeType||"audio/webm"});
+      stream.getTracks().forEach(t=>t.stop());
+      const audio=document.getElementById("dareVoicePreview");
+      audio.src=URL.createObjectURL(dareRecordedBlob);audio.classList.remove("hidden");
+      document.getElementById("dareRecord").classList.remove("hidden");
+      document.getElementById("dareStop").classList.add("hidden");
+    };
+    dareRecording.start();
+    document.getElementById("dareRecord").classList.add("hidden");
+    document.getElementById("dareStop").classList.remove("hidden");
+  } catch(e){alert(e.message||"Microphone unavailable");}
+}
+function stopDareRecording(){if(dareRecording?.state==="recording")dareRecording.stop()}
+async function submitDareResponse(){
+  if (!dareMethod||dareSubmissionBusy||!currentRoundId) return;
+  const roundId=currentRoundId;
+  let text="",file=null;
+  if(dareMethod==="text"){
+    text=document.getElementById("dareText").value.trim();
+    if(!text){alert("Please enter your answer.");return;}
+  }
+  if(dareMethod==="photo"||dareMethod==="video")file=document.getElementById("dareFile").files[0];
+  if(dareMethod==="voice"){
+    if(dareRecording?.state==="recording"){alert("Stop recording first.");return;}
+    if(dareRecordedBlob)file=new File([dareRecordedBlob],"dare-voice.webm",{type:dareRecordedBlob.type});
+  }
+  if(["photo","video","voice"].includes(dareMethod)&&!file){alert("Choose or record proof first.");return;}
+  if(file&&file.size>50*1024*1024){alert("Proof must be under 50 MB.");return;}
+  dareSubmissionBusy=true;
+  const button=document.getElementById("completeDareButton");button.disabled=true;
+  const message=document.getElementById("dareSubmissionMessage");
+  try{
+    let mediaPath=null;
+    if(file){
+      message.textContent="Uploading proof — please wait...";
+      const form=new FormData();
+      form.append("room_code",currentRoom.room_code);
+      form.append("player_token",currentPlayer.player_token);
+      form.append("round_id",roundId);
+      form.append("response_type",dareMethod);
+      form.append("file",file);
+      const upload=await fetch(SUPABASE_URL+"/functions/v1/upload-dare-proof",{method:"POST",headers:{apikey:SUPABASE_ANON_KEY},body:form});
+      const uploadResult=await upload.json();
+      if(!upload.ok||!uploadResult.success)throw Error(uploadResult.error||"Upload failed");
+      mediaPath=uploadResult.media_path;
+    }
+    if(roundId!==currentRoundId)throw Error("The dare changed during upload. Please refresh.");
+    message.textContent="Saving your completed dare...";
+    const response=await fetch(SUPABASE_URL+"/functions/v1/update-dare-status",{method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE_ANON_KEY},body:JSON.stringify({room_code:currentRoom.room_code,player_token:currentPlayer.player_token,dare_status:"completed",response_type:dareMethod,response_text:text,media_path:mediaPath})});
+    const result=await response.json();
+    if(!response.ok||!result.success)throw Error(result.error||"Could not complete dare");
+    message.textContent="Dare completed!";
+    if(isCheckingGameState)pendingDareRefresh=true;else await checkGameState();
+  }catch(e){message.textContent="Submission failed: "+e.message;alert(message.textContent)}
+  finally{dareSubmissionBusy=false;button.disabled=false;}
+}
+async function loadDareProof(roundId){
+  if(dareProofLoadedFor===roundId)return;
+  const container=document.getElementById("dareProofDisplay");
+  dareProofLoadedFor=roundId;
+  container.classList.remove("hidden");container.textContent="Loading dare response...";
+  try{
+    const r=await fetch(SUPABASE_URL+"/functions/v1/get-dare-proof",{method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE_ANON_KEY},body:JSON.stringify({room_code:currentRoom.room_code,player_token:currentPlayer.player_token,round_id:roundId})});
+    const data=await r.json();
+    if(!r.ok||!data.success)throw Error(data.error||"Could not load proof");
+    if(roundId!==currentRoundId)return;
+    container.replaceChildren();
+    const label=document.createElement("h3");label.textContent="✦ DARE RESPONSE ✦";container.append(label);
+    const proof=data.response;
+    if(!proof){const p=document.createElement("p");p.textContent="Dare completed — no response saved.";container.append(p);return;}
+    if(proof.response_type==="completed"){const p=document.createElement("p");p.textContent="✅ Completed without proof";container.append(p);}
+    else if(proof.response_type==="text"){const p=document.createElement("p");p.textContent=proof.response_text||"No answer provided";container.append(p);}
+    else if(proof.media_url){
+      const el=document.createElement(proof.response_type==="photo"?"img":proof.response_type==="voice"?"audio":"video");
+      el.src=proof.media_url;
+      if(el.tagName==="IMG")el.alt="Dare photo proof";else el.controls=true;
+      container.append(el);
+    }
+  }catch(e){dareProofLoadedFor="";container.textContent="Could not load dare response: "+e.message;}
+}
 async function updateDareStatus(dareStatus) {
   if (!isOnlineGame()) return;
   const buttonId = {
@@ -2334,6 +2469,7 @@ async function checkGameState() {
     }
 
     const newRound = round.id !== currentRoundId;
+    if(newRound){dareProofLoadedFor="";dareMethod=null;document.getElementById("dareResponsePanel").classList.add("hidden");document.getElementById("dareProofDisplay").classList.add("hidden");document.getElementById("completeDareButton").classList.add("hidden");}
     currentRoundId = round.id;
     currentRoundNumber = Number(round.round_number) || 0;
     currentQuestion = round.question_text;
@@ -2415,9 +2551,11 @@ async function checkGameState() {
       document.getElementById("startDareButton").classList.toggle(
         "hidden", !isChallenger || dareStatus !== "accepted"
       );
-      document.getElementById("completeDareButton").classList.toggle(
-        "hidden", !isChallenger || dareStatus !== "in_progress"
-      );
+      const canRespond=isChallenger&&dareStatus==="in_progress";
+      document.getElementById("dareResponsePanel").classList.toggle("hidden",!canRespond);
+      if(!canRespond){document.getElementById("completeDareButton").classList.add("hidden");}
+      document.getElementById("dareProofDisplay").classList.toggle("hidden",dareStatus!=="completed");
+      if(dareStatus==="completed")void loadDareProof(round.id);
     } else {
       const answers = Array.isArray(result.answers) ? result.answers : [];
       const mine = answers.find(answer => Number(answer.player_number) === me);
