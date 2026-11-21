@@ -1089,6 +1089,74 @@ header .tagline {
   }
 }
 
+
+/* ============================================================
+   UNFILTERED — NOCTURNE / REBEL DESIGN SYSTEM (2026)
+   Presentation-only layer: multiplayer logic remains untouched.
+   ============================================================ */
+:root{color-scheme:dark;--ink:#09070e;--panel:#191121;--panel2:#25152e;--violet:#b96bff;--lilac:#ead2ff;--silver:#d9d3e2;--muted:#b6a6c2;--line:rgba(206,145,255,.32);--glow:rgba(171,77,246,.25)}
+html{scroll-behavior:smooth}
+body{font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:radial-gradient(ellipse 110% 48% at 50% -8%,#49205b 0%,transparent 70%),radial-gradient(ellipse 90% 65% at 100% 80%,#22132c 0%,transparent 75%),linear-gradient(180deg,#0b0710,#100a16 55%,#09070e);color:#f9f4ff;letter-spacing:.01em}
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.18;background-image:radial-gradient(#cba7ef 0.6px,transparent 0.6px);background-size:22px 22px;mask-image:linear-gradient(to bottom,#000,transparent 85%)}
+main{max-width:650px;padding:12px 18px 50px}
+header{min-height:clamp(205px,47vw,310px);padding:0;background-position:center 32%;border-radius:0 0 30px 30px;box-shadow:inset 0 -28px 35px #0b0710,0 12px 36px #0006}
+header:after{content:"YOUR SECRETS. YOUR RULES. YOUR GAME.";position:absolute;left:12px;right:12px;bottom:22px;text-align:center;font-size:10px;font-weight:800;letter-spacing:3px;color:#e9d7f6;text-shadow:0 2px 10px #000,0 0 18px #aa55ff}
+#home{margin-top:-10px}
+#home .card,#createScreen .card,#joinScreen .card,#waitingScreen .card,#game .card,#game #answerEntry,#game #answerReveal,#game #answer{border:1px solid var(--line);background:linear-gradient(155deg,rgba(47,26,61,.95),rgba(17,11,24,.97) 72%);border-radius:23px;box-shadow:0 16px 38px #0006,inset 0 1px 0 #fff2,0 0 26px #ae59f51a;backdrop-filter:blur(8px)}
+#home .card{padding:30px 23px}
+#home .card:before{content:"✦";color:#d9a7ff;right:18px;top:8px}
+#home .card h1{font-size:clamp(26px,6vw,35px);font-weight:900;letter-spacing:-.7px;line-height:1.18;text-shadow:0 0 28px #ac57f777}
+#home .card p{font-size:14px;line-height:1.75}
+#home h2{font-size:13px;letter-spacing:3px;text-transform:uppercase;margin:29px 0 19px}
+#home h2:after{content:"✦ ───── ✧ ───── ✦";font-size:12px;letter-spacing:3px}
+h1,h2,h3{font-weight:850}
+h2{letter-spacing:1px}
+p{color:var(--silver)}
+button{cursor:pointer;position:relative;overflow:hidden;border-radius:16px;min-height:58px;padding:15px 18px;background:linear-gradient(135deg,#2a1935,#160e1e);border:1px solid #8c58ac;color:#fff9ff;font-size:14px;font-weight:850;letter-spacing:1px;text-transform:uppercase;box-shadow:inset 0 1px 0 #fff2,0 8px 22px #0005;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease}
+button.primary,#home button.primary,#createScreen button.primary,#joinScreen button.primary,#game button.primary,#waitingScreen button.primary{background:linear-gradient(115deg,#8b38bb,#5b247e 52%,#a148d3);border:1px solid #dfa8ff;box-shadow:0 7px 25px #a04bdf4d,inset 0 1px 0 #fff5}
+button:not(:disabled):active{transform:scale(.975)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #f1c8ff;outline-offset:3px}
+button:disabled{opacity:.38;cursor:not-allowed;box-shadow:none}
+button.hidden,.hidden{display:none!important}
+#home button{font-size:15px;min-height:68px}
+#home button:not(.primary){background:linear-gradient(115deg,#2d1b39,#181021)}
+#home>p.small{text-transform:uppercase;font-size:10px;letter-spacing:2px}
+#createScreen>h2,#joinScreen>h2,#waitingScreen h2,#game h2{font-size:clamp(23px,5.5vw,30px);font-weight:900;letter-spacing:2px;text-transform:uppercase;text-shadow:0 0 25px #ae57f766}
+#waitingScreen h2:after{font-size:13px}
+#playerList{padding:16px 13px;margin:12px 0;border:1px solid var(--line);border-radius:15px;background:#100a18;text-align:center;font-weight:750;color:#ead1ff;line-height:1.7;overflow-wrap:anywhere}
+#displayRoomCode{font-size:clamp(38px,10vw,55px);font-weight:950;letter-spacing:7px;text-align:center;color:#f3ddff;text-shadow:0 0 23px #a44af6,0 0 45px #a44af655;margin:9px 0}
+#waitingMessage{text-align:center;font-size:13px;color:#d6bbeb}
+#playerName,#joinPlayerName,#roomCode,#game textarea{width:100%;background:#100a18;color:#fff7ff;border:1px solid #9b65b8;border-radius:15px;padding:16px;font-size:16px;box-shadow:inset 0 0 18px #9b43dc18}
+#game>p:not(.small){text-transform:uppercase;font-size:11px;letter-spacing:2.5px;color:#c7a6db}
+#game #turnStatus{border:1px solid #b16cdb;background:linear-gradient(110deg,#311b41,#1a1125);border-radius:15px;padding:16px;color:#f2d9ff;box-shadow:0 0 22px #a855f72b;font-size:11px;letter-spacing:1.7px;text-transform:uppercase}
+#game #categories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0 23px}
+#game #categories button{min-height:83px;padding:13px 10px;font-size:12px;line-height:1.4;letter-spacing:.4px;background:radial-gradient(circle at top,#5a2d733f,transparent 70%),linear-gradient(140deg,#291a35,#160e1e);border:1px solid #81529f;border-radius:17px;box-shadow:inset 0 1px 0 #fff1,0 8px 17px #0004;overflow-wrap:anywhere}
+#game #categories button:before{content:"✦";font-size:15px;margin-bottom:7px;color:#d7a2ff}
+#game #categories button:disabled{opacity:.35}
+#game #categoryTitle{font-size:12px;font-weight:850;letter-spacing:3px;color:#e6baff;margin:0 0 16px}
+#game #question{min-height:150px;padding:27px 17px;background:radial-gradient(ellipse at top,#69358a66,transparent 75%),#140c1e;border:1px solid #b07cd0;border-radius:20px;font-size:clamp(20px,5.5vw,26px);font-weight:750;line-height:1.5;text-shadow:0 0 15px #b86df766;box-shadow:inset 0 0 24px #a855f71a,0 0 20px #a855f722;animation:unfiltered-arrive .45s ease both}
+#game #question:after{content:"✧  ✦  ✧";font-size:12px;letter-spacing:4px;margin-top:16px;color:#c78cf1}
+#game #answerEntry{padding:22px 17px;margin-top:20px}
+#game #answerEntry>p:first-child{letter-spacing:2.5px;font-size:11px}
+#game #answerReveal{animation:unfiltered-reveal .65s cubic-bezier(.2,.8,.2,1) both;border:1px solid #e2b1ff;background:radial-gradient(ellipse at top,#66358c66,transparent 80%),linear-gradient(150deg,#2b1739,#130b1b);box-shadow:0 0 33px #b36af74a,inset 0 0 24px #a855f711}
+#game #answerReveal h3{font-size:16px;letter-spacing:2px}
+#game #answerReveal p{background:#120b1b;border:1px solid #8f62ae;padding:16px;border-radius:15px}
+#game #darePanel{margin:20px 0;padding:23px 18px;border:1px solid #cb86f6;background:radial-gradient(ellipse at 50% 0%,#6a2c8d66,transparent 75%),linear-gradient(145deg,#281535,#120b1b);box-shadow:0 0 27px #ac54ec42,inset 0 0 26px #a855f711;animation:unfiltered-arrive .35s ease both}
+#dareChallenger{text-align:center;text-transform:uppercase;letter-spacing:2px;color:#e9c6ff;font-weight:850}
+#dareStatus{text-align:center;font-size:17px;line-height:1.5;color:#fff1ff;text-shadow:0 0 16px #ae63f7;letter-spacing:1px}
+#game #darePanel button{margin-top:12px}
+#game #categoryProgress{padding:16px 14px;border:1px solid #67437c;border-radius:15px;background:#150e1d;color:#c9b4d5;font-size:11px;line-height:1.8}
+#game #categoryProgress:before{font-size:11px;letter-spacing:2px}
+#game #timer{width:116px;min-height:116px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;margin:23px auto 18px;border:1px solid #b981dd;border-radius:50%;background:radial-gradient(circle,#442154,#140c1d 75%);font-size:36px;box-shadow:0 0 28px #b55af755,inset 0 0 20px #ad51ed2a}
+#game #timer:before{content:"COUNTDOWN";font-size:9px;letter-spacing:1.5px;margin:0 0 3px}
+#game #answer{padding:18px}
+footer{padding:20px 10px 34px;color:#a887b9;font-size:10px;letter-spacing:1.7px}
+@keyframes unfiltered-arrive{from{opacity:.4;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes unfiltered-reveal{0%{opacity:0;transform:translateY(12px) scale(.97);filter:blur(5px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@media(min-width:600px){#game #categories{grid-template-columns:repeat(3,minmax(0,1fr))}#home .card{padding:38px 30px}}
+@media(max-width:380px){main{padding:10px 12px 38px}#game #categories{gap:8px}#game #categories button{font-size:11px;min-height:79px;padding:10px 6px}#displayRoomCode{letter-spacing:4px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
 </style>
 </head>
 <body>
