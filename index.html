@@ -1157,6 +1157,11 @@ footer{padding:20px 10px 34px;color:#a887b9;font-size:10px;letter-spacing:1.7px}
 @media(max-width:380px){main{padding:10px 12px 38px}#game #categories{gap:8px}#game #categories button{font-size:11px;min-height:79px;padding:10px 6px}#displayRoomCode{letter-spacing:4px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 
+/* Voice memo controls */
+.voice-controls{margin-top:16px;padding:16px;border:1px solid #8755a7;border-radius:16px;background:#150e1f;text-align:center}
+.voice-controls audio,.voice-playback audio{display:block;width:100%;margin:12px auto;max-width:100%}
+.voice-controls button{margin:7px 0}
+.voice-playback{margin:12px 0;padding:13px;border:1px solid #9562ad;border-radius:14px;background:#180e22;color:#e8caff;font-size:12px;font-weight:700;letter-spacing:1px}
 </style>
 </head>
 <body>
@@ -1273,6 +1278,15 @@ footer{padding:20px 10px 34px;color:#a887b9;font-size:10px;letter-spacing:1.7px}
   <p class="small">YOUR ANSWER</p>
   <textarea id="playerAnswer" placeholder="Type your answer privately..." rows="3"></textarea>
   <button class="primary" onclick="submitPrivateAnswer()">SUBMIT ANSWER</button>
+  <div id="voiceControls" class="voice-controls hidden">
+    <p class="small">OR ANSWER WITH A VOICE MEMO 🎙️</p>
+    <button id="voiceRecordButton" type="button" onclick="startVoiceRecording()">🎙️ RECORD VOICE MEMO</button>
+    <button id="voiceStopButton" type="button" class="hidden" onclick="stopVoiceRecording()">■ STOP RECORDING</button>
+    <p id="voiceRecordingStatus" class="small" aria-live="polite"></p>
+    <audio id="voicePreview" controls class="hidden" preload="metadata"></audio>
+    <button id="voiceRedoButton" type="button" class="hidden" onclick="discardVoiceRecording()">↻ RERECORD</button>
+    <button id="voiceSendButton" type="button" class="primary hidden" onclick="sendVoiceRecording()">✦ SEND VOICE MEMO</button>
+  </div>
   <p id="answerStatus">Your answer will stay private until both players have submitted.</p>
 </div>
 
@@ -1280,6 +1294,8 @@ footer{padding:20px 10px 34px;color:#a887b9;font-size:10px;letter-spacing:1.7px}
   <h3>THE ANSWERS ARE IN ✳</h3>
   <p id="playerOneAnswer"></p>
   <p id="playerTwoAnswer"></p>
+  <div id="voicePlayback1" class="voice-playback hidden"><span>🎙️ PLAYER 1 VOICE MEMO</span><audio controls preload="none"></audio></div>
+  <div id="voicePlayback2" class="voice-playback hidden"><span>🎙️ PLAYER 2 VOICE MEMO</span><audio controls preload="none"></audio></div>
 </div>
      
 <div id="darePanel" class="card hidden">
@@ -1736,6 +1752,8 @@ function resetAnswerEntry() {
     "Your answer will stay private until both players have submitted.";
   document.getElementById("answerReveal").classList.add("hidden");
   hasSubmittedAnswer = false;
+  clearVoiceRecording();
+  resetVoicePlayback();
 }
 
 function startGame(mode) {
@@ -1952,12 +1970,187 @@ function newQuestion() {
   if (currentCategory) pickQuestion(currentCategory, currentLevel);
 }
 
+// Online-only voice memos. Text answers and Pass & Play remain unchanged.
+let voiceRecorder = null;
+let voiceStream = null;
+let voiceChunks = [];
+let voiceBlob = null;
+let voicePreviewUrl = null;
+let voiceRecordingRound = null;
+let voiceBusy = false;
+let voiceUploadedRound = null; // Upload succeeded; retry answer submission without reuploading.
+const voicePlaybackLoaded = new Set();
+
+function voiceUI() { return document.getElementById("voiceControls"); }
+function voiceMessage(message) { document.getElementById("voiceRecordingStatus").textContent = message; }
+function voiceSupported() {
+  return !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder && window.isSecureContext);
+}
+function refreshVoiceControls() {
+  const show = isOnlineGame() && !!currentRoundId && currentCategory !== "dareMe" && !hasSubmittedAnswer;
+  voiceUI().classList.toggle("hidden", !show);
+  if (!show) return;
+  document.getElementById("voiceRecordButton").classList.toggle("hidden", !!voiceBlob || !!voiceRecorder);
+  document.getElementById("voiceStopButton").classList.toggle("hidden", !voiceRecorder);
+  document.getElementById("voicePreview").classList.toggle("hidden", !voiceBlob);
+  document.getElementById("voiceRedoButton").classList.toggle("hidden", !voiceBlob);
+  document.getElementById("voiceSendButton").classList.toggle("hidden", !voiceBlob);
+  document.getElementById("voiceSendButton").disabled = voiceBusy;
+  document.getElementById("voiceRedoButton").disabled = voiceBusy || voiceUploadedRound === currentRoundId;
+  document.getElementById("voiceRecordButton").disabled = voiceBusy || !voiceSupported();
+  if (!voiceSupported()) voiceMessage("Voice recording isn't supported in this browser. You can still type an answer.");
+}
+function clearVoiceRecording() {
+  if (voiceRecorder && voiceRecorder.state !== "inactive") {
+    voiceRecorder.onstop = null;
+    voiceRecorder.stop();
+  }
+  voiceRecorder = null;
+  voiceStream?.getTracks().forEach(track => track.stop());
+  voiceStream = null;
+  voiceChunks = [];
+  voiceBlob = null;
+  voiceRecordingRound = null;
+  voiceUploadedRound = null;
+  if (voicePreviewUrl) URL.revokeObjectURL(voicePreviewUrl);
+  voicePreviewUrl = null;
+  const audio = document.getElementById("voicePreview");
+  audio.pause(); audio.removeAttribute("src"); audio.load();
+  voiceMessage("");
+  refreshVoiceControls();
+}
+async function startVoiceRecording() {
+  if (!voiceSupported() || !isOnlineGame() || hasSubmittedAnswer || voiceBusy || !currentRoundId) return;
+  try {
+    clearVoiceRecording();
+    const roundId = currentRoundId;
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    if (roundId !== currentRoundId || hasSubmittedAnswer) {stream.getTracks().forEach(t=>t.stop());return;}
+    voiceStream = stream;
+    const mime = ["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg;codecs=opus"].find(type => MediaRecorder.isTypeSupported(type));
+    voiceRecorder = mime ? new MediaRecorder(stream,{mimeType:mime}) : new MediaRecorder(stream);
+    voiceChunks = [];
+    voiceRecordingRound = roundId;
+    voiceRecorder.ondataavailable = e => { if(e.data.size) voiceChunks.push(e.data); };
+    voiceRecorder.onstop = () => {
+      const type = voiceRecorder?.mimeType || voiceChunks[0]?.type || "";
+      voiceStream?.getTracks().forEach(t=>t.stop()); voiceStream = null; voiceRecorder = null;
+      if (voiceRecordingRound !== currentRoundId || hasSubmittedAnswer) {clearVoiceRecording();return;}
+      voiceBlob = new Blob(voiceChunks,{type}); voiceChunks = [];
+      if (voiceBlob.size > 10*1024*1024) {clearVoiceRecording();alert("Recording is over 10 MB. Please record a shorter message.");return;}
+      if (!voiceBlob.size) {clearVoiceRecording();alert("No audio was captured. Please try again.");return;}
+      voicePreviewUrl = URL.createObjectURL(voiceBlob);
+      document.getElementById("voicePreview").src = voicePreviewUrl;
+      voiceMessage("Preview your recording, rerecord, or send it privately.");
+      refreshVoiceControls();
+    };
+    voiceRecorder.start(1000);
+    voiceMessage("🔴 Recording… tap STOP when finished (maximum 10 MB).");
+    refreshVoiceControls();
+  } catch (error) {clearVoiceRecording();alert("Microphone unavailable: " + error.message);}
+}
+function stopVoiceRecording() { if (voiceRecorder?.state === "recording") voiceRecorder.stop(); }
+function discardVoiceRecording() {
+  if (voiceBusy) return;
+  if (voiceUploadedRound === currentRoundId) {
+    alert("This recording is already uploaded. Tap SEND VOICE MEMO again to finish submitting it.");
+    return;
+  }
+  clearVoiceRecording();
+}
+async function sendVoiceRecording() {
+  if (!voiceBlob || voiceBusy || hasSubmittedAnswer || !isOnlineGame() || voiceRecordingRound !== currentRoundId) return;
+  voiceBusy = true; refreshVoiceControls();
+  const roundId = currentRoundId;
+  try {
+    if (voiceUploadedRound !== roundId) {
+    const form = new FormData();
+    form.append("room_code",currentRoom.room_code);
+    form.append("player_token",currentPlayer.player_token);
+    form.append("round_id",roundId);
+    const mime = voiceBlob.type.split(";")[0];
+    const extension = mime === "audio/mp4" ? "m4a" : mime === "audio/ogg" ? "ogg" : mime === "audio/webm" ? "webm" : "audio.bin";
+    form.append("audio",voiceBlob,"voice."+extension);
+    voiceMessage("Uploading voice memo…");
+    const upload = await fetch(SUPABASE_URL+"/functions/v1/upload-voice-memo",{
+      method:"POST",headers:{apikey:SUPABASE_ANON_KEY},body:form
+    });
+    const uploaded = await upload.json();
+    if (!upload.ok || !uploaded.success) {
+      // A prior upload may have succeeded even if the browser lost its response.
+      // The backend verifies room/player ownership before returning this conflict.
+      const alreadyStored = upload.status === 409 &&
+        typeof uploaded.error === "string" &&
+        uploaded.error.includes("already been uploaded for this round");
+      if (!alreadyStored) throw new Error(uploaded.error || "Voice upload failed");
+    }
+    voiceUploadedRound = roundId;
+    } // The file is already stored; only retry the answer submission.
+    voiceMessage("Finishing voice answer submission…");
+    // Submit an ordinary answer marker to preserve existing simultaneous-reveal logic.
+    const submitted = await fetch(SUPABASE_URL+"/functions/v1/submit-answer",{
+      method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE_ANON_KEY},
+      body:JSON.stringify({room_code:currentRoom.room_code,player_token:currentPlayer.player_token,round_id:roundId,answer:"🎙️ Voice memo (play below)"})
+    });
+    const answer = await submitted.json();
+    if (!submitted.ok || !answer.success) throw new Error("Recording uploaded, but answer submission failed: "+(answer.error||"Unknown error")+". Please don't rerecord yet.");
+    hasSubmittedAnswer = true;
+    document.getElementById("playerAnswer").disabled = true;
+    const textButton = document.querySelector("#answerEntry button");
+    textButton.disabled = true; textButton.textContent = "ANSWER SUBMITTED";
+    document.getElementById("answerStatus").textContent = "Voice memo submitted privately. Waiting for the other player…";
+    clearVoiceRecording();
+    await checkGameState();
+  } catch(error) {
+    alert(error.message);
+    voiceMessage(voiceUploadedRound === roundId
+      ? "Recording saved. Tap SEND VOICE MEMO again to retry submitting your answer. Do not rerecord."
+      : "Upload failed. Your recording is still here; tap SEND VOICE MEMO to retry.");
+  }
+  finally {voiceBusy = false;refreshVoiceControls();}
+}
+async function loadVoicePlayback(roundId, number) {
+  const holder = document.getElementById("voicePlayback"+number);
+  const key = roundId+":"+number;
+  if (voicePlaybackLoaded.has(key)) return;
+  try {
+    const response = await fetch(SUPABASE_URL+"/functions/v1/get-voice-memo",{
+      method:"POST",headers:{"Content-Type":"application/json",apikey:SUPABASE_ANON_KEY},
+      body:JSON.stringify({room_code:currentRoom.room_code,player_token:currentPlayer.player_token,round_id:roundId,player_number:number})
+    });
+    if (roundId !== currentRoundId) return;
+    if (response.status === 404 || response.status === 403) return;
+    const result = await response.json();
+    if (!response.ok || !result.success) return;
+    holder.querySelector("audio").src = result.audio_url;
+    holder.classList.remove("hidden");
+    voicePlaybackLoaded.add(key);
+    // Signed URLs expire after 60s. Refresh on playback if the link has expired.
+    const audio = holder.querySelector("audio");
+    audio.dataset.expires = String(Date.now()+50000);
+    audio.onplay = async () => {
+      if (Date.now() < Number(audio.dataset.expires)) return;
+      audio.pause();voicePlaybackLoaded.delete(key);
+      await loadVoicePlayback(roundId,number);
+      if (roundId === currentRoundId) audio.play().catch(()=>{});
+    };
+  } catch(error) {console.warn("Voice playback unavailable",error);}
+}
+function resetVoicePlayback() {
+  for (const number of [1,2]) {
+    const holder = document.getElementById("voicePlayback"+number);
+    holder.classList.add("hidden");
+    const audio = holder.querySelector("audio");audio.pause();audio.removeAttribute("src");audio.load();
+  }
+}
+
 async function submitPrivateAnswer() {
   if (!currentRoom || !currentPlayer || !currentRoundId) {
     alert("The question round is not ready yet.");
     return;
   }
 
+  if (voiceRecorder || voiceBusy || voiceBlob || voiceUploadedRound === currentRoundId) { alert("Finish submitting your uploaded recording before switching to text."); return; }
   const answer = document.getElementById("playerAnswer").value.trim();
 
   if (!answer) {
@@ -1996,6 +2189,7 @@ async function submitPrivateAnswer() {
     }
 
     hasSubmittedAnswer = true;
+    clearVoiceRecording();
     document.getElementById("playerAnswer").disabled = true;
     status.textContent = "Answer submitted privately. Waiting for the other player...";
     button.textContent = "ANSWER SUBMITTED";
@@ -2129,6 +2323,7 @@ async function checkGameState() {
     const answerReveal = document.getElementById("answerReveal");
 
     if (isDare) {
+      voiceUI().classList.add("hidden");
       answerEntry.classList.add("hidden");
       answerReveal.classList.add("hidden");
       // Trust the server-assigned player number; never grant controls to an unknown player.
@@ -2185,6 +2380,7 @@ async function checkGameState() {
           "Answer submitted privately. Waiting for the other player...";
       }
       answerEntry.classList.toggle("hidden", isComplete);
+      refreshVoiceControls();
       answerReveal.classList.toggle("hidden", !isComplete);
       if (isComplete) {
         const one = answers.find(answer => Number(answer.player_number) === 1);
@@ -2193,6 +2389,8 @@ async function checkGameState() {
           one ? "PLAYER 1: " + one.answer : "PLAYER 1: No answer";
         document.getElementById("playerTwoAnswer").textContent =
           two ? "PLAYER 2: " + two.answer : "PLAYER 2: No answer";
+        if (one?.answer?.includes("🎙️ Voice memo")) void loadVoicePlayback(round.id,1);
+        if (two?.answer?.includes("🎙️ Voice memo")) void loadVoicePlayback(round.id,2);
       }
     }
 
