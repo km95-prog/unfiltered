@@ -1292,6 +1292,7 @@ let currentPlayer = null;
 let currentRoundId = null;
 let gamePoll = null; 
 let isCheckingGameState = false;
+let pendingDareRefresh = false;
 let isPublishingQuestion = false;
 let hasSubmittedAnswer = false;
 let currentRoundNumber = 0;
@@ -1753,7 +1754,7 @@ async function pickQuestion(category, level = "") {
       if (category === "dareMe") {
         document.getElementById("dareChallenger").textContent = "YOU ARE THE CHALLENGER";
         document.getElementById("dareStatus").textContent = "WAITING FOR CHALLENGE...";
-        document.getElementById("acceptDareButton").classList.remove("hidden");
+        document.getElementById("acceptDareButton").classList.add("hidden");
         document.getElementById("startDareButton").classList.add("hidden");
         document.getElementById("completeDareButton").classList.add("hidden");
       }
@@ -1887,7 +1888,11 @@ async function updateDareStatus(dareStatus) {
     if (!response.ok || !result.success) {
       throw new Error(result.error || "Could not update dare.");
     }
-    await checkGameState();
+    if (isCheckingGameState) {
+      pendingDareRefresh = true;
+    } else {
+      await checkGameState();
+    }
   } catch (error) {
     alert("Dare update failed: " + error.message);
   } finally {
@@ -1974,28 +1979,46 @@ async function checkGameState() {
     if (isDare) {
       answerEntry.classList.add("hidden");
       answerReveal.classList.add("hidden");
-      const challenger = (result.players || []).find(
-        player => Number(player.player_number) === Number(round.challenger_player_number)
+      // Trust the server-assigned player number; never grant controls to an unknown player.
+      const challengerNumber = Number(round.challenger_player_number);
+      const validChallenger = challengerNumber === 1 || challengerNumber === 2;
+      const validMe = me === 1 || me === 2;
+      const isChallenger = validChallenger && validMe && me === challengerNumber;
+      const challenger = (result.players || []).find(player =>
+        Number(player.player_number) === challengerNumber
       );
-      const isChallenger = me === Number(round.challenger_player_number);
+      const challengerLabel = challenger?.display_name ||
+        (validChallenger ? "PLAYER " + challengerNumber : "UNKNOWN PLAYER");
       document.getElementById("dareChallenger").textContent =
-        (challenger ? challenger.display_name : "Player") + " IS THE CHALLENGER";
+        challengerLabel + " IS THE CHALLENGER";
+
       const statuses = {
         pending: "WAITING FOR CHALLENGE...",
-        accepted: "😈 CHALLENGE ACCEPTED",
+        accepted: "😈 CHALLENGE ACCEPTED — READY TO START",
         in_progress: "🔥 DARE IN PROGRESS",
         completed: "✳ DARE COMPLETED"
       };
-      document.getElementById("dareStatus").textContent =
-        statuses[round.dare_status] || "WAITING FOR CHALLENGE...";
+      const dareStatus = round.dare_status;
+      const dareStatusElement = document.getElementById("dareStatus");
+      if (!validChallenger || !validMe || !Object.hasOwn(statuses, dareStatus)) {
+        dareStatusElement.textContent = "⚠ DARE DATA INCOMPLETE — CHECK CONNECTION";
+        console.error("UNFILTERED Dare Me data mismatch", {
+          myPlayerNumber: currentPlayer.player_number,
+          challengerPlayerNumber: round.challenger_player_number,
+          dareStatus: dareStatus,
+          roundNumber: round.round_number
+        });
+      } else {
+        dareStatusElement.textContent = statuses[dareStatus];
+      }
       document.getElementById("acceptDareButton").classList.toggle(
-        "hidden", !isChallenger || round.dare_status !== "pending"
+        "hidden", !isChallenger || dareStatus !== "pending"
       );
       document.getElementById("startDareButton").classList.toggle(
-        "hidden", !isChallenger || round.dare_status !== "accepted"
+        "hidden", !isChallenger || dareStatus !== "accepted"
       );
       document.getElementById("completeDareButton").classList.toggle(
-        "hidden", !isChallenger || round.dare_status !== "in_progress"
+        "hidden", !isChallenger || dareStatus !== "in_progress"
       );
     } else {
       const answers = Array.isArray(result.answers) ? result.answers : [];
@@ -2036,6 +2059,10 @@ async function checkGameState() {
     console.error("Game update failed:", error);
   } finally {
     isCheckingGameState = false;
+    if (pendingDareRefresh) {
+      pendingDareRefresh = false;
+      void checkGameState();
+    }
   }
 }
 
