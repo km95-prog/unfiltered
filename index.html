@@ -1782,27 +1782,39 @@ function startGame(mode) {
   }
 }
 
-// Keep a per-room history so random questions are not repeated until a deck is exhausted.
+// Session-first question history. Pass & Play works even when incognito storage is unavailable.
+// Online history remains device-local until shared room history is implemented server-side.
+const seenQuestionsInMemory = new Map();
 function questionHistoryKey() {
-  return "unfilteredSeenQuestions:" + (currentRoom?.room_code || "local") + ":" + currentMode;
+  return "unfilteredSeenQuestions:" + (isOnlineGame() ? currentRoom.room_code : "pass_play") + ":" + currentMode;
+}
+function questionDeckKey(category, level = "") {
+  return questionHistoryKey() + ":" + category + (level ? ":" + level : "");
 }
 function getSeenQuestions(category, level = "") {
-  try {
-    const history = JSON.parse(localStorage.getItem(questionHistoryKey()) || "{}");
-    return history[category + (level ? ":" + level : "")] || [];
-  } catch (_) { return []; }
+  const key = questionDeckKey(category, level);
+  if (!seenQuestionsInMemory.has(key)) {
+    let saved = [];
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || "[]");
+      if (Array.isArray(value)) saved = value;
+    } catch (_) { /* Incognito may block storage; memory still works. */ }
+    seenQuestionsInMemory.set(key, new Set(saved));
+  }
+  return Array.from(seenQuestionsInMemory.get(key));
 }
 function rememberQuestion(category, question, level = "") {
   if (!category || !question) return;
-  try {
-    const key = questionHistoryKey();
-    const history = JSON.parse(localStorage.getItem(key) || "{}");
-    const deck = category + (level ? ":" + level : "");
-    const seen = new Set(history[deck] || []);
-    seen.add(question);
-    history[deck] = Array.from(seen);
-    localStorage.setItem(key, JSON.stringify(history));
-  } catch (_) { /* Game remains playable if browser storage is unavailable. */ }
+  const key = questionDeckKey(category, level);
+  getSeenQuestions(category, level);
+  const seen = seenQuestionsInMemory.get(key);
+  seen.add(question);
+  try { localStorage.setItem(key, JSON.stringify(Array.from(seen))); } catch (_) {}
+}
+function resetQuestionDeck(category, level = "") {
+  const key = questionDeckKey(category, level);
+  seenQuestionsInMemory.set(key, new Set());
+  try { localStorage.removeItem(key); } catch (_) {}
 }
 
 async function pickQuestion(category, level = "") {
@@ -1823,16 +1835,11 @@ async function pickQuestion(category, level = "") {
 
   const seen = new Set(getSeenQuestions(category, level));
   let pool = list.filter(question => !seen.has(question));
-  // Once every question has appeared, start a new cycle of the deck.
+  // Reset only after the complete deck has been played; avoid immediate repeat.
   if (!pool.length) {
+    resetQuestionDeck(category, level);
     pool = list.filter(question => question !== currentQuestion);
     if (!pool.length) pool = list;
-    try {
-      const key = questionHistoryKey();
-      const history = JSON.parse(localStorage.getItem(key) || "{}");
-      history[category + (level ? ":" + level : "")] = [];
-      localStorage.setItem(key, JSON.stringify(history));
-    } catch (_) {}
   }
   const selectedQuestion = pool[Math.floor(Math.random() * pool.length)];
 
