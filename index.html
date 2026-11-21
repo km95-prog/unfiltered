@@ -1817,6 +1817,19 @@ function resetQuestionDeck(category, level = "") {
   try { localStorage.removeItem(key); } catch (_) {}
 }
 
+// Retrieve the latest shared history immediately before choosing an online question.
+async function fetchSharedQuestionHistory() {
+  const response = await fetch(SUPABASE_URL + "/functions/v1/room-status", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+    body: JSON.stringify({ room_code: currentRoom.room_code, player_token: currentPlayer.player_token })
+  });
+  const result = await response.json();
+  if (!response.ok || !result.success) throw new Error(result.error || "Could not check shared history.");
+  if (!Array.isArray(result.question_history)) throw new Error("Shared history is not available yet. Check the room-status deployment.");
+  return result.question_history;
+}
+
 async function pickQuestion(category, level = "") {
   if (isPublishingQuestion) return;
   if (isOnlineGame() && !canChooseQuestion) return;
@@ -1833,10 +1846,28 @@ async function pickQuestion(category, level = "") {
     return;
   }
 
-  const seen = new Set(getSeenQuestions(category, level));
+  let seen;
+  if (isOnlineGame()) {
+    // Server history is authoritative across both devices and browser sessions.
+    // For Dare Me, match the question text across all levels because the server
+    // currently stores the category but not the level.
+    try {
+      const shared = await fetchSharedQuestionHistory();
+      seen = new Set(shared.filter(item => item.category === category).map(item => item.question_text));
+    } catch (error) {
+      alert("Could not check played questions: " + error.message);
+      return;
+    }
+  } else {
+    seen = new Set(getSeenQuestions(category, level));
+  }
   let pool = list.filter(question => !seen.has(question));
-  // Reset only after the complete deck has been played; avoid immediate repeat.
   if (!pool.length) {
+    if (isOnlineGame()) {
+      // Do not recycle a room's history without an explicit new-game/reset action.
+      alert("You've played every question in this deck in this room! Start a new room to play the deck again.");
+      return;
+    }
     resetQuestionDeck(category, level);
     pool = list.filter(question => question !== currentQuestion);
     if (!pool.length) pool = list;
