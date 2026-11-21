@@ -1327,6 +1327,7 @@ let currentMode = "friends";
 let currentQuestion = "";
 let currentCategory = "";
 let currentLevel = "";
+let choosingDareLevel = false;
 let seconds = 60;
 let clock = null;
 
@@ -1691,6 +1692,7 @@ function categoryLabel(category) {
 }
 
 function renderCategories() {
+  choosingDareLevel = false;
   const categories = document.getElementById("categories");
   categories.innerHTML = "";
   Object.keys(gameLibrary()).forEach(category => {
@@ -1709,6 +1711,7 @@ function setCategoryAccess(enabled) {
 }
 
 function showCategoryChoices(enabled) {
+  if (choosingDareLevel && enabled) return;
   const categories = document.getElementById("categories");
   if (!categories.querySelector("[data-category]") ||
       categories.querySelectorAll("[data-category]").length !== Object.keys(gameLibrary()).length) {
@@ -1755,6 +1758,7 @@ function startGame(mode) {
   currentQuestion = "";
   currentCategory = "";
   currentLevel = "";
+  choosingDareLevel = false;
   document.getElementById("answerEntry").classList.add("hidden");
   document.getElementById("answerReveal").classList.add("hidden");
   document.getElementById("darePanel").classList.add("hidden");
@@ -1799,6 +1803,7 @@ async function pickQuestion(category, level = "") {
   const selectedQuestion = pool[Math.floor(Math.random() * pool.length)];
 
   if (isOnlineGame()) {
+    choosingDareLevel = false;
     isPublishingQuestion = true;
     setCategoryAccess(false);
     try {
@@ -1848,6 +1853,7 @@ async function pickQuestion(category, level = "") {
 
 function showDareLevels() {
   if (isOnlineGame() && !canChooseQuestion) return;
+  choosingDareLevel = true;
   const categories = document.getElementById("categories");
   categories.innerHTML = "";
   setRoundDisplay("CHOOSE YOUR DARE LEVEL", "How daring are you feeling?");
@@ -1860,6 +1866,7 @@ function showDareLevels() {
   const back = document.createElement("button");
   back.textContent = "BACK TO CATEGORIES";
   back.onclick = () => {
+    choosingDareLevel = false;
     renderCategories();
     setCategoryAccess(!isOnlineGame() || canChooseQuestion);
   };
@@ -1998,6 +2005,7 @@ async function checkGameState() {
     const me = Number(currentPlayer.player_number);
 
     if (!round) {
+      currentRoundNumber = 0;
       canChooseQuestion = me === 1;
       showCategoryChoices(canChooseQuestion);
       turnStatus.textContent = canChooseQuestion
