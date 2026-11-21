@@ -1162,6 +1162,57 @@ footer{padding:20px 10px 34px;color:#a887b9;font-size:10px;letter-spacing:1.7px}
 .voice-controls audio,.voice-playback audio{display:block;width:100%;margin:12px auto;max-width:100%}
 .voice-controls button{margin:7px 0}
 .voice-playback{margin:12px 0;padding:13px;border:1px solid #9562ad;border-radius:14px;background:#180e22;color:#e8caff;font-size:12px;font-weight:700;letter-spacing:1px}
+
+/* =============================================================
+ UNFILTERED — GOTHIC LUXURY × NEON CHAOS — COMPLETE COSMETIC UPDATE
+ Visual-only CSS: existing multiplayer, questions and voice JS untouched.
+ Requires gothic-midnight-bg.webp beside index.html.
+ ============================================================= */
+:root{--lux-purple:#c27aff;--lux-silver:#ece4f1;--lux-pink:#ef8ecf;--lux-ink:#0b0711}
+body{overflow-x:hidden}
+/* Welcome artwork is ONLY visible while home is the active screen. */
+body:has(#home:not(.hidden)){background:#0b0711}
+body:has(#home:not(.hidden))::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(9,5,14,.1),rgba(9,5,14,.34) 45%,rgba(9,5,14,.48)),url("gothic-midnight-bg.webp") center center/cover no-repeat;opacity:.95}
+body:has(#home:not(.hidden)) main{position:relative}
+body:has(#home:not(.hidden)) header{background-image:linear-gradient(to bottom,rgba(12,7,18,.15),rgba(12,7,18,.45) 65%,#100b17 100%),url("welcome-art.png");background-position:center 35%;background-size:cover}
+#home .card{background:linear-gradient(155deg,rgba(33,16,45,.82),rgba(10,7,18,.86) 80%);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(221,163,255,.65);box-shadow:0 12px 42px #05020bbb,0 0 32px #a24ef244,inset 0 1px 0 #fff3}
+#home h2{color:#f3e6ff;text-shadow:0 0 18px #b767ff}
+#home button{box-shadow:0 10px 25px #080311bb,0 0 20px #8d35d155;backdrop-filter:blur(8px)}
+#home button:not(.primary){border-color:#e0a3f6;background:linear-gradient(110deg,rgba(45,22,62,.91),rgba(17,9,29,.93))}
+#home>p.small{text-shadow:0 2px 9px #000,0 0 10px #8f42c9;color:#f0d8ff}
+/* Consistent gothic-luxury surfaces throughout the game */
+#createScreen .card,#joinScreen .card,#waitingScreen .card,#game .card,#game #answerEntry,#game #answerReveal,#game #answer,#game #darePanel{border-color:rgba(196,130,243,.55);background:radial-gradient(ellipse at 50% 0%,rgba(111,45,155,.3),transparent 68%),linear-gradient(150deg,rgba(36,20,49,.97),rgba(12,8,20,.98));box-shadow:0 14px 34px #0008,inset 0 1px 0 #fff2,0 0 25px #a855f71e}
+#createScreen h2,#joinScreen h2,#waitingScreen h2,#game h2{color:#f4e6ff;text-shadow:0 0 18px #9c47e977}
+#selectedMode{padding:10px 14px;border-radius:999px;border:1px solid #ab72d4;background:#291638;text-align:center;font-size:12px;font-weight:850;letter-spacing:2px;color:#ead3fa}
+button{touch-action:manipulation}button:not(:disabled):hover{border-color:#e0b4ff;box-shadow:0 0 22px #a95bf74d,inset 0 1px 0 #fff3}
+button.primary:not(:disabled):hover{box-shadow:0 0 27px #b767ff80,inset 0 1px 0 #fff5}
+#game #categories button{position:relative;min-height:100px;padding:16px 11px;border:1px solid #9b65b9;border-radius:19px;background:radial-gradient(circle at 50% -10%,#7639a24d,transparent 68%),linear-gradient(145deg,#2b1939,#120b1c);box-shadow:0 9px 21px #0007,inset 0 1px 0 #fff2;transition:transform .2s,box-shadow .2s,border-color .2s}
+#game #categories button::before{content:"✦";display:block;font-size:21px;margin:0 0 9px;color:#dba6ff;text-shadow:0 0 13px #b35ef8}
+#game #categories button[data-category="dareMe"]::before,#game #categories button[data-category="dare"]::before{content:"♠"}
+#game #categories button[data-category="wouldYouRather"]::before{content:"⚖"}
+#game #categories button[data-category="secretsAndConfessions"]::before{content:"☾"}
+#game #categories button[data-category="friendship"]::before{content:"♡"}
+#game #categories button[data-category="deep"],#game #categories button[data-category="deepAndEmotional"]{border-color:#b18ac7}
+#game #categories button:not(:disabled):active{transform:translateY(2px) scale(.985);box-shadow:0 0 26px #ad61ff88}
+#game #turnStatus{background:linear-gradient(115deg,#3d204f,#1b1027);border-color:#b780d8}
+#game #question{position:relative;min-height:165px;border-color:#d2a0f4;background:radial-gradient(ellipse at 50% 0%,#7b39994d,transparent 72%),linear-gradient(145deg,#2c1939,#100a19);box-shadow:0 0 27px #9d42e33d,inset 0 0 30px #bd7cff16}
+#game #answerEntry{border-color:#ae77d1}#game #answerStatus{font-size:13px;line-height:1.7;color:#e4cfef}
+#game #answerReveal{border-color:#e6bbff;box-shadow:0 0 38px #c26bff70,inset 0 0 28px #a855f71e}
+#game #answerReveal h3{font-size:clamp(18px,4.5vw,23px);font-weight:950;letter-spacing:2.6px;color:#fff0ff;text-shadow:0 0 19px #bd79ff}
+#game #answerReveal p{border-left:3px solid #b46ce8;background:linear-gradient(100deg,#24132f,#100a19)}
+#game #timer{border:2px solid #ce96f5;box-shadow:0 0 0 6px #a855f712,0 0 31px #ae4fff66,inset 0 0 23px #a855f72a}
+#waitingScreen .card{position:relative}#waitingMessage::before{content:"✦ ";color:#d4a3ff}#waitingMessage::after{content:" ✦";color:#d4a3ff}
+.voice-controls{border:1px solid #b77de0;border-radius:19px;background:radial-gradient(ellipse at top,#4b245e88,transparent 85%),#130b1c;box-shadow:inset 0 0 20px #a855f718}
+.voice-controls #voiceRecordButton:not(.hidden){border-color:#dc8bbd;box-shadow:0 0 20px #c456a54a}
+.voice-controls #voiceStopButton:not(.hidden){border-color:#f5a6cd;background:linear-gradient(125deg,#5d1e4c,#27102b)}
+.voice-playback{border-color:#bb80df;border-radius:17px;background:linear-gradient(135deg,#2a1637,#110a1a);padding:16px;box-shadow:0 0 17px #9d4bd52b}
+.voice-playback span{display:block;margin-bottom:10px;color:#f1d9ff}
+.voice-controls audio,.voice-playback audio{color-scheme:dark;min-height:48px}
+#game #darePanel{border-color:#d78ef6;box-shadow:0 0 31px #bd54e455}
+#game textarea:focus,#playerName:focus,#joinPlayerName:focus,#roomCode:focus{border-color:#e3b2ff;box-shadow:0 0 18px #b46bf74d;outline:none}
+@media(max-width:380px){#game #categories button{min-height:90px}#home .card{padding:24px 17px}}
+@media(prefers-reduced-motion:reduce){#game #question,#game #answerReveal{animation:none}}
+
 </style>
 </head>
 <body>
@@ -1291,7 +1342,7 @@ footer{padding:20px 10px 34px;color:#a887b9;font-size:10px;letter-spacing:1.7px}
 </div>
 
 <div id="answerReveal" class="hidden">
-  <h3>THE ANSWERS ARE IN ✳</h3>
+  <h3>✦ NO MORE SECRETS ✦</h3>
   <p id="playerOneAnswer"></p>
   <p id="playerTwoAnswer"></p>
   <div id="voicePlayback1" class="voice-playback hidden"><span>🎙️ PLAYER 1 VOICE MEMO</span><audio controls preload="none"></audio></div>
