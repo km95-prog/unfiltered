@@ -1782,6 +1782,29 @@ function startGame(mode) {
   }
 }
 
+// Keep a per-room history so random questions are not repeated until a deck is exhausted.
+function questionHistoryKey() {
+  return "unfilteredSeenQuestions:" + (currentRoom?.room_code || "local") + ":" + currentMode;
+}
+function getSeenQuestions(category, level = "") {
+  try {
+    const history = JSON.parse(localStorage.getItem(questionHistoryKey()) || "{}");
+    return history[category + (level ? ":" + level : "")] || [];
+  } catch (_) { return []; }
+}
+function rememberQuestion(category, question, level = "") {
+  if (!category || !question) return;
+  try {
+    const key = questionHistoryKey();
+    const history = JSON.parse(localStorage.getItem(key) || "{}");
+    const deck = category + (level ? ":" + level : "");
+    const seen = new Set(history[deck] || []);
+    seen.add(question);
+    history[deck] = Array.from(seen);
+    localStorage.setItem(key, JSON.stringify(history));
+  } catch (_) { /* Game remains playable if browser storage is unavailable. */ }
+}
+
 async function pickQuestion(category, level = "") {
   if (isPublishingQuestion) return;
   if (isOnlineGame() && !canChooseQuestion) return;
@@ -1798,8 +1821,19 @@ async function pickQuestion(category, level = "") {
     return;
   }
 
-  const choices = list.filter(question => question !== currentQuestion);
-  const pool = choices.length ? choices : list;
+  const seen = new Set(getSeenQuestions(category, level));
+  let pool = list.filter(question => !seen.has(question));
+  // Once every question has appeared, start a new cycle of the deck.
+  if (!pool.length) {
+    pool = list.filter(question => question !== currentQuestion);
+    if (!pool.length) pool = list;
+    try {
+      const key = questionHistoryKey();
+      const history = JSON.parse(localStorage.getItem(key) || "{}");
+      history[category + (level ? ":" + level : "")] = [];
+      localStorage.setItem(key, JSON.stringify(history));
+    } catch (_) {}
+  }
   const selectedQuestion = pool[Math.floor(Math.random() * pool.length)];
 
   if (isOnlineGame()) {
@@ -1813,6 +1847,7 @@ async function pickQuestion(category, level = "") {
       currentRoundId = round.id;
       currentRoundNumber = Number(round.round_number) || currentRoundNumber + 1;
       currentQuestion = selectedQuestion;
+      rememberQuestion(category, selectedQuestion, level);
       currentCategory = category;
       currentLevel = level;
       canChooseQuestion = false;
@@ -1840,6 +1875,7 @@ async function pickQuestion(category, level = "") {
     }
   } else {
     currentQuestion = selectedQuestion;
+    rememberQuestion(category, selectedQuestion, level);
     currentCategory = category;
     currentLevel = level;
     setRoundDisplay(category, selectedQuestion);
@@ -2018,6 +2054,8 @@ async function checkGameState() {
     currentRoundId = round.id;
     currentRoundNumber = Number(round.round_number) || 0;
     currentQuestion = round.question_text;
+    // Both devices remember questions they actually see.
+    rememberQuestion(round.category, round.question_text, round.category === "dareMe" ? (currentLevel || "") : "");
     currentCategory = round.category;
 
     if (newRound) {
