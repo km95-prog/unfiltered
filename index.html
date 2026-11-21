@@ -2370,7 +2370,10 @@ async function checkGameState() {
     } else {
       const answers = Array.isArray(result.answers) ? result.answers : [];
       const mine = answers.find(answer => Number(answer.player_number) === me);
-      if (mine && !hasSubmittedAnswer) {
+      // The server reports this player's submission before either answer is revealed.
+      // Revealed answers remain a fallback for older room-status deployments.
+      const alreadySubmitted = result.my_answer_submitted === true || Boolean(mine);
+      if (alreadySubmitted && !hasSubmittedAnswer) {
         hasSubmittedAnswer = true;
         document.getElementById("playerAnswer").disabled = true;
         const submit = document.querySelector("#answerEntry button");
